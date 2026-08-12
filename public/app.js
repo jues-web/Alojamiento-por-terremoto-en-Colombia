@@ -523,7 +523,7 @@ async function renderAlojamientos() {
     } else {
       listViviendasEl.innerHTML = filtered.map(v => `
         <div class="card">
-          ${v.imagen_base64 ? `<img src="${v.imagen_base64}" class="card-img" alt="Foto vivienda">` : ''}
+          ${v.foto_id ? `<img src="/api/viviendas/${v.id}/foto" class="card-img" alt="Foto de la vivienda" loading="lazy" decoding="async">` : ''}
           <div class="card-header">
             <h4 class="card-title">🏠 ${v.tipo} en ${v.barrio} (${v.ciudad})</h4>
             <span class="badge ${v.estado === 'Busca ocupante' ? 'badge-ok' : 'badge-warning'}">${v.estado}</span>
