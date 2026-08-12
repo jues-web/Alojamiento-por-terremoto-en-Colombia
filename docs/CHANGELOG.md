@@ -51,6 +51,17 @@
   El campo `foto_id` indica si hay imagen que pedir. Ver ADR-008.
 
 - **BUG-006**: Corrección en la entrega y visualización de imágenes de viviendas y habitaciones. Se actualizó la consulta SQL en `GET /api/viviendas` con `COALESCE(v.foto_id, f.id) AS foto_id` y `LEFT JOIN foto f ON (v.foto_id = f.id OR f.vivienda_id = v.id)` para vincular correctamente fotos existentes. Además en `public/app.js` se implementó `getPlaceholderImg(tipo)` para renderizar ilustraciones SVG vectoriales cuando la vivienda no posea foto personalizada o falle la carga en red.
+
+### Corregido
+- **BUG-006**: HTTP 429 en todas las rutas `/api/` bloqueaba la navegación normal. Dos causas
+  raíz corregidas en `5e7e6da`: (1) `generalLimiter` subió de 300 a 1000 req/15min y se
+  excluyeron las rutas de foto con `skip`; se añadió `app.set('trust proxy', 1)` para que
+  Express no agrupe a todos los usuarios detrás de Docker/nginx como una sola IP; nuevo
+  `authLimiter` (15 intentos/15min) exclusivo para `POST /api/admin/login`. (2) El frontend
+  descartaba silenciosamente errores HTTP: `fetchAdminData` ahora limpia sesión en 401/403,
+  muestra mensaje en 429 y nunca deja el panel en blanco; `renderAlojamientos`,
+  `renderNecesidades` y `renderMascotas` comprueban `res.ok` antes de llamar a `.json()`;
+  `loginAdmin`, `adminEliminar` y `adminAprobar` notifican errores de red mediante `showToast`.
 - **BUG-001**: el fallback silencioso a SQLite hacía que la plataforma perdiera todos los
   registros en cada reinicio del contenedor, sin ningún error visible.
 - **BUG-004**: el botón "Cambiar Estado" no daba ninguna señal cuando la operación fallaba.

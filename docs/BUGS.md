@@ -44,6 +44,23 @@
 
 ## ✅ BUGS RESUELTOS
 
+### BUG-006 — HTTP 429 en peticiones API y panel de admin en blanco por rate limiting restrictivo y manejo silencioso de errores
+- **Estado**: ✅ RESUELTO
+- **Severidad**: 🟠 Alta
+- **Rama afectada**: `juan`
+- **Reportado por**: Juan Esteban B. — 2026-08-12
+- **Asignado a**: Agente IA
+- **Descripción**: La navegación por la app generaba errores HTTP 429 (Too Many Requests) en múltiples endpoints de `/api/`. Dos causas raíz:
+  1. `generalLimiter` (300 req/15min) aplicaba a **todas** las rutas de `/api/` incluyendo las de fotos, cuyo tráfico es muy alto. Sin `trust proxy`, Express agrupaba a todos los usuarios detrás de Docker/nginx bajo una sola IP, agotando el límite de golpe.
+  2. El frontend descartaba silenciosamente los errores (`if (!res.ok) return;` / catch vacío), dejando el panel de admin y los listados totalmente en blanco sin feedback al usuario.
+- **Pasos para reproducir**:
+  1. Navegar por la app con múltiples pestañas o recargas rápidas detrás de un proxy/Docker.
+  2. La API devuelve HTTP 429; el panel de admin aparece en blanco sin mensaje.
+- **Resultado esperado**: Navegación normal sin bloqueos; errores de red o de servidor con mensajes claros en la UI.
+- **Resultado actual (antes del fix)**: Peticiones bloqueadas con HTTP 429 y panel de admin en blanco.
+- **Commit de fix**: `5e7e6da`
+- **Notas**: Tres cambios en `server/index.js`: (1) `app.set('trust proxy', 1)`; (2) `generalLimiter` sube a 1000 req/15min y excluye las rutas de foto con `skip`; (3) nuevo `authLimiter` (15 intentos/15min) exclusivo para `POST /api/admin/login`. En `public/app.js`: `fetchAdminData` limpia sesión en 401/403 y muestra mensaje en 429; `renderAlojamientos`, `renderNecesidades`, `renderMascotas` comprueban `res.ok` antes de llamar a `.json()`; `loginAdmin`, `adminEliminar` y `adminAprobar` notifican errores de red vía `showToast` en lugar de catch vacío.
+
 ### BUG-001 — Fallback silencioso a SQLite provoca pérdida total de datos en producción
 - **Estado**: ✅ RESUELTO
 - **Severidad**: 🔴 Crítica
@@ -217,8 +234,8 @@
 |-----------|----------|
 | 🔴 Activos | 0 |
 | 🟡 En Progreso | 0 |
-| ✅ Resueltos | 6 |
+| ✅ Resueltos | 7 |
 | 📌 Conocidos | 1 |
-| **Total** | **7** |
+| **Total** | **8** |
 
 > Actualizar esta tabla cada vez que cambie el estado de un bug.

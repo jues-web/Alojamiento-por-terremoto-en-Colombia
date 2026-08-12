@@ -49,6 +49,8 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| `9c38784` | 2026-08-12 | Agente IA | `docs: cerrar BUG-006 en BUGS.md, CHANGELOG y COMMITS.md` | ✅ ok |
+| `5e7e6da` | 2026-08-12 | Agente IA | `fix(api,ui): corregir 429 por rate limit y panel admin en blanco (BUG-006)` | ✅ ok |
 | *(pendiente)* | 2026-08-12 | Agente IA | `docs: registrar ADR-008 sobre la entrega de fotos y el cambio de API` | ✅ ok |
 | `f689467` | 2026-08-12 | Agente IA | `perf(api): servir las fotos aparte en vez de embeberlas en el listado` | ✅ ok |
 | `ef918fb` | 2026-08-12 | Agente IA | `docs: cerrar BUG-K001 en BUGS.md y CHANGELOG` | ✅ ok |
