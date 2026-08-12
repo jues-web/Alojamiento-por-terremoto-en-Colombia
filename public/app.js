@@ -602,8 +602,15 @@ async function toggleEstadoVivienda(id, estadoActual) {
     if (res.ok) {
       showToast(`Estado actualizado a: ${nuevoEstado}`);
       renderAlojamientos();
+      return;
     }
-  } catch (e) {}
+    // BUG-003: el servidor ahora responde 403 si no eres el autor. Sin este mensaje
+    // el botón parecía roto (no pasaba nada al hacer clic).
+    const data = await res.json().catch(() => ({}));
+    showToast(data.error || 'No se pudo actualizar el estado.', 'error');
+  } catch (e) {
+    showToast('Sin conexión. Verifica tu internet e intenta de nuevo.', 'error');
+  }
 }
 
 async function toggleEstadoNecesidad(id, estadoActual) {
@@ -617,8 +624,13 @@ async function toggleEstadoNecesidad(id, estadoActual) {
     if (res.ok) {
       showToast(`Estado actualizado a: ${nuevoEstado}`);
       renderNecesidades();
+      return;
     }
-  } catch (e) {}
+    const data = await res.json().catch(() => ({}));
+    showToast(data.error || 'No se pudo actualizar el estado.', 'error');
+  } catch (e) {
+    showToast('Sin conexión. Verifica tu internet e intenta de nuevo.', 'error');
+  }
 }
 
 // Reporte Comunitario Anti-Spam

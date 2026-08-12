@@ -9,6 +9,8 @@ let sqliteDb = null;
 const databaseUrl = process.env.DATABASE_URL;
 
 async function initDB() {
+  const isProduction = process.env.NODE_ENV === 'production';
+
   if (databaseUrl) {
     try {
       pgPool = new Pool({
@@ -24,11 +26,29 @@ async function initDB() {
       await createPostgresTables();
       return;
     } catch (err) {
-      console.warn(' No se pudo conectar a PostgreSQL, usando fallback SQLite local:', err.message);
+      // BUG-001: en producción NO se degrada a SQLite. El archivo data.db vive en el
+      // disco efímero del contenedor, así que la app arrancaría "sana" y perdería todos
+      // los registros en cada reinicio o redespliegue, sin ningún error visible.
+      if (isProduction) {
+        throw new Error(
+          `No se pudo conectar a PostgreSQL en producción: ${err.message}\n` +
+          `Revisa DATABASE_URL (host, credenciales y sslmode). El fallback a SQLite está\n` +
+          `deshabilitado en producción porque los datos se perderían en cada reinicio.`
+        );
+      }
+      console.warn('No se pudo conectar a PostgreSQL, usando fallback SQLite local:', err.message);
     }
+  } else if (isProduction) {
+    // BUG-001: sin DATABASE_URL en producción los listados dejarían de ser públicos
+    // y compartidos (MUST-HAVE #2 del Project Brief).
+    throw new Error(
+      'DATABASE_URL no está definida y NODE_ENV=production.\n' +
+      'La plataforma exige PostgreSQL en producción: los listados deben ser compartidos\n' +
+      'entre todos los visitantes, no locales al contenedor.'
+    );
   }
 
-  // Fallback a SQLite
+  // Fallback a SQLite (solo desarrollo)
   console.log('Inicializando base de datos SQLite local (data.db)');
   const dbPath = path.join(__dirname, '..', 'data.db');
   sqliteDb = new sqlite3.Database(dbPath);

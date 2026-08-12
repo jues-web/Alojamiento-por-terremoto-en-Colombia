@@ -28,7 +28,9 @@ services:
       PORT: 3000
       NODE_ENV: production
       DATABASE_URL: postgresql://postgres:postgres@db:5432/alojamiento_db
-      ADMIN_PASSWORD: admin123
+      # BUG-002: se toma de .env (copiar desde .env.example). Falla con mensaje claro
+      # si no está definida, en vez de arrancar con la clave por defecto "admin123".
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en tu archivo .env (ver .env.example)}
     depends_on:
       db:
         condition: service_healthy

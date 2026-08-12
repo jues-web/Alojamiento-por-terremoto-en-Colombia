@@ -10,7 +10,44 @@ const { initDB, query } = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'admin123';
+const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+
+// BUG-002: la clave admin da acceso a eliminar cualquier registro. En producción debe
+// venir siempre del entorno y nunca puede quedarse en un valor por defecto conocido.
+const CLAVES_DEBILES = ['admin123', 'admin', 'password', 'changeme', '123456'];
+const ADMIN_PASSWORD = resolveAdminPassword();
+
+function resolveAdminPassword() {
+  const fromEnv = process.env.ADMIN_PASSWORD;
+
+  if (IS_PRODUCTION) {
+    if (!fromEnv) {
+      throw new Error(
+        'ADMIN_PASSWORD no está definida y NODE_ENV=production.\n' +
+        'Defínela en las variables de entorno del host antes de desplegar.\n' +
+        'Genera una con: node -e "console.log(require(\'crypto\').randomBytes(24).toString(\'hex\'))"'
+      );
+    }
+    if (CLAVES_DEBILES.includes(fromEnv.toLowerCase())) {
+      throw new Error(
+        `ADMIN_PASSWORD tiene un valor por defecto conocido ("${fromEnv}"). ` +
+        'Cámbiala antes de exponer la plataforma en internet.'
+      );
+    }
+    if (fromEnv.length < 12) {
+      throw new Error(
+        `ADMIN_PASSWORD es demasiado corta (${fromEnv.length} caracteres). Mínimo 12 en producción.`
+      );
+    }
+    return fromEnv;
+  }
+
+  if (!fromEnv) {
+    console.warn('ADMIN_PASSWORD no definida — usando clave de desarrollo "admin123". NO usar en producción.');
+    return 'admin123';
+  }
+  return fromEnv;
+}
 
 // Middlewares globales
 app.use(cors());
@@ -92,6 +129,12 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// BUG-003: los listados públicos nunca deben exponer el owner_token. Si viaja al cliente,
+// cualquiera puede copiarlo y hacerse pasar por el autor del registro.
+function sinDatosPrivados(rows) {
+  return rows.map(({ owner_token, ...publico }) => publico);
+}
+
 // ===== API ENDPOINTS =====
 
 // Healthcheck de Docker
@@ -124,7 +167,7 @@ app.get('/api/viviendas', async (req, res) => {
       WHERE v.sospechoso = false 
       ORDER BY v.fecha_registro DESC
     `);
-    res.json(rows);
+    res.json(sinDatosPrivados(rows));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -174,14 +217,35 @@ app.post('/api/viviendas', upload.single('foto'), async (req, res) => {
   }
 });
 
+// Estados válidos por entidad (MUST-HAVE #4 del Project Brief)
+const ESTADOS_VIVIENDA = ['Busca ocupante', 'Ya fue ocupada'];
+const ESTADOS_NECESIDAD = ['Buscando alojamiento', 'Ya encontró alojamiento'];
+
+// BUG-003: solo el autor del registro (owner_token) o un admin pueden cambiar el estado.
+function esAdmin(req) {
+  return req.headers['x-admin-key'] === ADMIN_PASSWORD;
+}
+
 app.patch('/api/viviendas/:id/estado', async (req, res) => {
   try {
     const { id } = req.params;
     const { estado, owner_token } = req.body;
-    
+
+    if (!ESTADOS_VIVIENDA.includes(estado)) {
+      return res.status(400).json({
+        error: `Estado inválido. Valores permitidos: ${ESTADOS_VIVIENDA.join(' | ')}.`
+      });
+    }
+
     // Se valida el token local de autoría o admin
     const current = await query(`SELECT owner_token FROM vivienda WHERE id = ?`, [id]);
     if (!current.length) return res.status(404).json({ error: 'Vivienda no encontrada.' });
+
+    if (!esAdmin(req) && (!owner_token || current[0].owner_token !== owner_token)) {
+      return res.status(403).json({
+        error: 'Solo quien publicó este registro puede cambiar su estado.'
+      });
+    }
 
     await query(`UPDATE vivienda SET estado = ? WHERE id = ?`, [estado, id]);
     res.json({ success: true });
@@ -194,7 +258,7 @@ app.patch('/api/viviendas/:id/estado', async (req, res) => {
 app.get('/api/necesidades-vivienda', async (req, res) => {
   try {
     const rows = await query(`SELECT * FROM necesidad_vivienda WHERE sospechoso = false ORDER BY fecha_registro DESC`);
-    res.json(rows);
+    res.json(sinDatosPrivados(rows));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -235,7 +299,24 @@ app.post('/api/necesidades-vivienda', async (req, res) => {
 app.patch('/api/necesidades-vivienda/:id/estado', async (req, res) => {
   try {
     const { id } = req.params;
-    const { estado } = req.body;
+    const { estado, owner_token } = req.body;
+
+    if (!ESTADOS_NECESIDAD.includes(estado)) {
+      return res.status(400).json({
+        error: `Estado inválido. Valores permitidos: ${ESTADOS_NECESIDAD.join(' | ')}.`
+      });
+    }
+
+    // BUG-003: este endpoint ni siquiera leía el owner_token antes de actualizar.
+    const current = await query(`SELECT owner_token FROM necesidad_vivienda WHERE id = ?`, [id]);
+    if (!current.length) return res.status(404).json({ error: 'Solicitud no encontrada.' });
+
+    if (!esAdmin(req) && (!owner_token || current[0].owner_token !== owner_token)) {
+      return res.status(403).json({
+        error: 'Solo quien publicó esta solicitud puede cambiar su estado.'
+      });
+    }
+
     await query(`UPDATE necesidad_vivienda SET estado = ? WHERE id = ?`, [estado, id]);
     res.json({ success: true });
   } catch (err) {
@@ -247,7 +328,7 @@ app.patch('/api/necesidades-vivienda/:id/estado', async (req, res) => {
 app.get('/api/centros-acopio', async (req, res) => {
   try {
     const rows = await query(`SELECT * FROM centro_acopio WHERE sospechoso = false ORDER BY fecha_registro DESC`);
-    res.json(rows);
+    res.json(sinDatosPrivados(rows));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -281,7 +362,7 @@ app.post('/api/centros-acopio', async (req, res) => {
 app.get('/api/refugios-mascota', async (req, res) => {
   try {
     const rows = await query(`SELECT * FROM refugio_mascota WHERE sospechoso = false ORDER BY fecha_registro DESC`);
-    res.json(rows);
+    res.json(sinDatosPrivados(rows));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -315,7 +396,7 @@ app.post('/api/refugios-mascota', async (req, res) => {
 app.get('/api/necesidades-mascota', async (req, res) => {
   try {
     const rows = await query(`SELECT * FROM necesidad_mascota WHERE sospechoso = false ORDER BY fecha_registro DESC`);
-    res.json(rows);
+    res.json(sinDatosPrivados(rows));
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -448,5 +529,10 @@ initDB().then(() => {
     console.log(`🚀 Servidor ejecutándose en el puerto ${PORT}`);
   });
 }).catch(err => {
-  console.error('Error al inicializar la base de datos:', err);
+  // BUG-001: salir con código 1 para que el orquestador (Docker/Render/Fly) marque el
+  // despliegue como fallido. Antes solo se registraba el error y el contenedor quedaba
+  // vivo sin servidor escuchando, ocultando el problema.
+  console.error('\n❌ Error fatal al inicializar la base de datos:\n');
+  console.error(err.message);
+  process.exit(1);
 });
