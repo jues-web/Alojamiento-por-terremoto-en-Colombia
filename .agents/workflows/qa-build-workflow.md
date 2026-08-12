@@ -1,5 +1,10 @@
 # QA & Build Workflow - Alojamiento por Terremoto en Colombia
 
+> ⚠️ **LEER PRIMERO antes de usar este workflow**:
+> 1. `.agents/AGENTS.md` — instrucciones maestras para agentes
+> 2. `docs/BUGS.md` — bugs activos y conocidos
+> 3. `docs/CHANGELOG.md` — estado actual del proyecto
+>
 > **FLUJO A TRABAJAR**: `[INSERTA AQUÍ. EJ: "Flujo 1 — Registro y Consulta de Ofertas de Vivienda y Mascotas"]`
 
 ---
@@ -57,13 +62,21 @@ Actúa como **Arquitecto de Software Senior y Lead QA Engineer**. Tu objetivo es
 | 6 | Acceso al Panel Admin con contraseña incorrecta | Sad | Atacante | `/api/admin/login` con clave errónea | 401 Unauthorized ("Clave de administración incorrecta"). |
 
 ### 0.4 Lista Exacta de Archivos a Leer en Fase 1
-- `Arquitectura/Project-Brief.md`
-- `Arquitectura/PRD.md`
-- `Arquitectura/modelo-de-datos.md`
-- `Arquitectura/historia-usuario-alojamiento.md`
-- `Arquitectura/pie-de-pagina.md`
-- `Arquitectura/diseñoAplicacionWeb.html`
-- `implementation_plan.md`
+
+**Control de cambios (OBLIGATORIO leer primero):**
+- `.agents/AGENTS.md` ← instrucciones maestras para agentes
+- `docs/BUGS.md` ← bugs activos y conocidos
+- `docs/CHANGELOG.md` ← versiones y cambios recientes
+- `docs/DECISIONS.md` ← decisiones arquitectónicas
+- `docs/COMMITS.md` ← historial de commits por rama
+
+**Documentación de origen del proyecto:**
+- `docs/origen/Project-Brief.md`
+- `docs/origen/PRD.md`
+- `docs/origen/modelo-de-datos.md`
+- `docs/origen/historia-usuario-alojamiento.md`
+- `docs/origen/pie-de-pagina.md`
+- `docs/origen/diseñoAplicacionWeb.html`
 
 > **DETENERSE AQUÍ**: Presentar la Fase 0 y esperar validación humana antes de pasar a la Fase 1.
 
@@ -134,7 +147,8 @@ Actúa como **Arquitecto de Software Senior y Lead QA Engineer**. Tu objetivo es
 
 - [ ] **Fase 0**: Briefing, matriz de test (1 Happy path + 3 Sad paths) y mapa de cobertura aprobados.
 - [ ] **Fase 1**: Auditoría de arquitectura y seguridad completada sin bloqueos pendientes.
-- [ ] **Fase 2**: Código e implementación refactorizada y verificada en la rama `juan`.
+- [ ] **Fase 2**: Código e implementación refactorizada y verificada en la rama correcta.
 - [ ] **Fase 3**: Pruebas unitarias de Backend y Frontend pasando al 100%.
 - [ ] **Fase 4**: Pruebas de integración sobre PostgreSQL validadas con transacciones correctas.
 - [ ] **Fase 5**: Smoke tests en Docker y verificación responsiva multidispositivo completada.
+- [ ] **Post-QA**: `docs/BUGS.md` actualizado con bugs encontrados/resueltos. `docs/COMMITS.md` actualizado con commits de fix. `docs/CHANGELOG.md` actualizado si hubo cambios de feature.
