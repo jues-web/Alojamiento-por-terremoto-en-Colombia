@@ -17,7 +17,7 @@ export NODE_ENV="${NODE_ENV:-production}"
 
 echo "🌐 Puerto: $PORT"
 echo "⚙️  Entorno: $NODE_ENV"
-echo "🗄️  DATABASE_URL: ${DATABASE_URL:-SQLite local (data.db)}"
+echo "🗄️  DATABASE_URL: ${DATABASE_URL:+definida}${DATABASE_URL:-NO DEFINIDA (la app no arrancara)}"
 echo "🔐 ADMIN_PASSWORD: ${ADMIN_PASSWORD:+definida}${ADMIN_PASSWORD:-NO DEFINIDA}"
 
 # 3. Instalar dependencias si no existen (por si el volumen no las tiene)

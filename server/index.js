@@ -187,7 +187,7 @@ app.get('/api/viviendas/:id/foto', async (req, res) => {
       `SELECT f.imagen_base64
        FROM vivienda v
        JOIN foto f ON v.foto_id = f.id
-       WHERE v.id = ? AND v.sospechoso = false`,
+       WHERE v.id = $1 AND v.sospechoso = false`,
       [id]
     );
 
@@ -237,14 +237,14 @@ app.post('/api/viviendas', upload.single('foto'), async (req, res) => {
       const base64Webp = await processImageBuffer(req.file.buffer);
       fotoId = uuidv4();
       await query(
-        `INSERT INTO foto (id, vivienda_id, imagen_base64) VALUES (?, ?, ?)`,
+        `INSERT INTO foto (id, vivienda_id, imagen_base64) VALUES ($1, $2, $3)`,
         [fotoId, viviendaId, base64Webp]
       );
     }
 
     await query(
       `INSERT INTO vivienda (id, tipo, ciudad, barrio, capacidad, detalles, nombre_encargado, contacto, foto_id, estado, owner_token, sospechoso)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Busca ocupante', ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Busca ocupante', $10, $11)`,
       [viviendaId, tipo, ciudad, barrio, capacidad, detalles || '', nombre_encargado, contacto, fotoId, owner_token || uuidv4(), isAnomaly]
     );
 
@@ -275,7 +275,7 @@ app.patch('/api/viviendas/:id/estado', async (req, res) => {
     }
 
     // Se valida el token local de autoría o admin
-    const current = await query(`SELECT owner_token FROM vivienda WHERE id = ?`, [id]);
+    const current = await query(`SELECT owner_token FROM vivienda WHERE id = $1`, [id]);
     if (!current.length) return res.status(404).json({ error: 'Vivienda no encontrada.' });
 
     if (!esAdmin(req) && (!owner_token || current[0].owner_token !== owner_token)) {
@@ -284,7 +284,7 @@ app.patch('/api/viviendas/:id/estado', async (req, res) => {
       });
     }
 
-    await query(`UPDATE vivienda SET estado = ? WHERE id = ?`, [estado, id]);
+    await query(`UPDATE vivienda SET estado = $1 WHERE id = $2`, [estado, id]);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -323,7 +323,7 @@ app.post('/api/necesidades-vivienda', async (req, res) => {
 
     await query(
       `INSERT INTO necesidad_vivienda (id, nombre_familia, contacto, ciudad, cantidad_personas, condicion_especial, descripcion_condicion, descripcion_vivienda_necesita, estado, owner_token, sospechoso)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Buscando alojamiento', ?, ?)`,
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Buscando alojamiento', $9, $10)`,
       [id, nombre_familia, contacto, ciudad, cantidad_personas, condEspecialBool, descripcion_condicion || '', descripcion_vivienda_necesita, owner_token || uuidv4(), isAnomaly]
     );
 
@@ -345,7 +345,7 @@ app.patch('/api/necesidades-vivienda/:id/estado', async (req, res) => {
     }
 
     // BUG-003: este endpoint ni siquiera leía el owner_token antes de actualizar.
-    const current = await query(`SELECT owner_token FROM necesidad_vivienda WHERE id = ?`, [id]);
+    const current = await query(`SELECT owner_token FROM necesidad_vivienda WHERE id = $1`, [id]);
     if (!current.length) return res.status(404).json({ error: 'Solicitud no encontrada.' });
 
     if (!esAdmin(req) && (!owner_token || current[0].owner_token !== owner_token)) {
@@ -354,7 +354,7 @@ app.patch('/api/necesidades-vivienda/:id/estado', async (req, res) => {
       });
     }
 
-    await query(`UPDATE necesidad_vivienda SET estado = ? WHERE id = ?`, [estado, id]);
+    await query(`UPDATE necesidad_vivienda SET estado = $1 WHERE id = $2`, [estado, id]);
     res.json({ success: true });
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -386,7 +386,7 @@ app.post('/api/centros-acopio', async (req, res) => {
     const isAnomaly = detectAnomaly(req.ip);
     const id = uuidv4();
     await query(
-      `INSERT INTO centro_acopio (id, ciudad, sector, direccion, contacto, owner_token, sospechoso) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO centro_acopio (id, ciudad, sector, direccion, contacto, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [id, ciudad, sector, direccion, contacto, owner_token || uuidv4(), isAnomaly]
     );
     res.status(201).json({ success: true, id });
@@ -420,7 +420,7 @@ app.post('/api/refugios-mascota', async (req, res) => {
     const isAnomaly = detectAnomaly(req.ip);
     const id = uuidv4();
     await query(
-      `INSERT INTO refugio_mascota (id, tipo_mascota, ciudad, sector, direccion, contacto, owner_token, sospechoso) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO refugio_mascota (id, tipo_mascota, ciudad, sector, direccion, contacto, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
       [id, tipo_mascota, ciudad, sector, direccion, contacto, owner_token || uuidv4(), isAnomaly]
     );
     res.status(201).json({ success: true, id });
@@ -454,7 +454,7 @@ app.post('/api/necesidades-mascota', async (req, res) => {
     const isAnomaly = detectAnomaly(req.ip);
     const id = uuidv4();
     await query(
-      `INSERT INTO necesidad_mascota (id, nombre_encargado, contacto, tipo_mascota, cantidad_mascotas, owner_token, sospechoso) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO necesidad_mascota (id, nombre_encargado, contacto, tipo_mascota, cantidad_mascotas, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [id, nombre_encargado, contacto, tipo_mascota, cantidad_mascotas, owner_token || uuidv4(), isAnomaly]
     );
     res.status(201).json({ success: true, id });
@@ -478,10 +478,10 @@ app.post('/api/reportar/:tipo/:id', async (req, res) => {
     const tableName = tableMap[tipo];
     if (!tableName) return res.status(400).json({ error: 'Tipo inválido.' });
 
-    await query(`UPDATE ${tableName} SET reportes_count = reportes_count + 1 WHERE id = ?`, [id]);
+    await query(`UPDATE ${tableName} SET reportes_count = reportes_count + 1 WHERE id = $1`, [id]);
     
     // Si alcanza 3 reportes, se marca como sospechoso automáticamente
-    await query(`UPDATE ${tableName} SET sospechoso = true WHERE id = ? AND reportes_count >= 3`, [id]);
+    await query(`UPDATE ${tableName} SET sospechoso = true WHERE id = $1 AND reportes_count >= 3`, [id]);
 
     res.json({ success: true, message: 'Reporte registrado. Gracias por colaborar con la comunidad.' });
   } catch (err) {
@@ -533,7 +533,7 @@ app.delete('/api/admin/eliminar/:tipo/:id', requireAdmin, async (req, res) => {
     const tableName = tableMap[tipo];
     if (!tableName) return res.status(400).json({ error: 'Tipo inválido.' });
 
-    await query(`DELETE FROM ${tableName} WHERE id = ?`, [id]);
+    await query(`DELETE FROM ${tableName} WHERE id = $1`, [id]);
     res.json({ success: true, message: 'Registro eliminado exitosamente.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -553,7 +553,7 @@ app.patch('/api/admin/aprobar/:tipo/:id', requireAdmin, async (req, res) => {
     const tableName = tableMap[tipo];
     if (!tableName) return res.status(400).json({ error: 'Tipo inválido.' });
 
-    await query(`UPDATE ${tableName} SET sospechoso = false, reportes_count = 0 WHERE id = ?`, [id]);
+    await query(`UPDATE ${tableName} SET sospechoso = false, reportes_count = 0 WHERE id = $1`, [id]);
     res.json({ success: true, message: 'Registro aprobado y verificado.' });
   } catch (err) {
     res.status(500).json({ error: err.message });

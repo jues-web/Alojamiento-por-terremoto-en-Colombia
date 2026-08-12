@@ -1,63 +1,49 @@
 const { Pool } = require('pg');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
 
-let isPostgres = false;
+// ADR-009: la plataforma usa PostgreSQL como único motor. El fallback a SQLite que definía
+// el ADR-001 se retiró: obligaba a mantener el esquema duplicado a mano, dejaba una capa de
+// traducción de placeholders y hacía que el desarrollo se probara contra un motor distinto
+// del de producción. El desarrollo local usa ahora `docker compose up` o una rama de Neon.
 let pgPool = null;
-let sqliteDb = null;
-
-const databaseUrl = process.env.DATABASE_URL;
 
 async function initDB() {
-  const isProduction = process.env.NODE_ENV === 'production';
+  const databaseUrl = process.env.DATABASE_URL;
 
-  if (databaseUrl) {
-    try {
-      pgPool = new Pool({
-        connectionString: databaseUrl,
-        connectionTimeoutMillis: 5000,
-      });
-
-      // Probamos la conexión
-      const client = await pgPool.connect();
-      console.log('Conectado exitosamente a PostgreSQL');
-      client.release();
-      isPostgres = true;
-      await createPostgresTables();
-      return;
-    } catch (err) {
-      // BUG-001: en producción NO se degrada a SQLite. El archivo data.db vive en el
-      // disco efímero del contenedor, así que la app arrancaría "sana" y perdería todos
-      // los registros en cada reinicio o redespliegue, sin ningún error visible.
-      if (isProduction) {
-        throw new Error(
-          `No se pudo conectar a PostgreSQL en producción: ${err.message}\n` +
-          `Revisa DATABASE_URL (host, credenciales y sslmode). El fallback a SQLite está\n` +
-          `deshabilitado en producción porque los datos se perderían en cada reinicio.`
-        );
-      }
-      console.warn('No se pudo conectar a PostgreSQL, usando fallback SQLite local:', err.message);
-    }
-  } else if (isProduction) {
-    // BUG-001: sin DATABASE_URL en producción los listados dejarían de ser públicos
-    // y compartidos (MUST-HAVE #2 del Project Brief).
+  if (!databaseUrl) {
     throw new Error(
-      'DATABASE_URL no está definida y NODE_ENV=production.\n' +
-      'La plataforma exige PostgreSQL en producción: los listados deben ser compartidos\n' +
-      'entre todos los visitantes, no locales al contenedor.'
+      'DATABASE_URL no está definida.\n' +
+      'PostgreSQL es obligatorio: ya no existe fallback a SQLite (ADR-009).\n' +
+      '  · Local:      docker compose up -d db   (y copia .env.example a .env)\n' +
+      '  · Neon/nube:  añade ?sslmode=require al final de la cadena de conexión'
     );
   }
 
-  // Fallback a SQLite (solo desarrollo)
-  console.log('Inicializando base de datos SQLite local (data.db)');
-  const dbPath = path.join(__dirname, '..', 'data.db');
-  sqliteDb = new sqlite3.Database(dbPath);
-  isPostgres = false;
-  await createSqliteTables();
+  pgPool = new Pool({
+    connectionString: databaseUrl,
+    connectionTimeoutMillis: 5000,
+  });
+
+  try {
+    // Se prueba la conexión antes de seguir, para fallar con un mensaje claro y no
+    // más tarde en la primera petición del usuario.
+    const client = await pgPool.connect();
+    console.log('Conectado exitosamente a PostgreSQL');
+    client.release();
+  } catch (err) {
+    throw new Error(
+      `No se pudo conectar a PostgreSQL: ${err.message}\n` +
+      'Revisa DATABASE_URL (host, credenciales y sslmode).'
+    );
+  }
+
+  await createTables();
 }
 
-// ===== POSTGRESQL TABLES =====
-async function createPostgresTables() {
+// ===== ESQUEMA =====
+// No hay sistema de migraciones: las tablas se crean con CREATE TABLE IF NOT EXISTS en cada
+// arranque. Añadir una columna aquí NO la agrega a una base de datos que ya existe; eso
+// requiere un ALTER TABLE manual contra la instancia correspondiente.
+async function createTables() {
   const queries = [
     `CREATE TABLE IF NOT EXISTS vivienda (
       id UUID PRIMARY KEY,
@@ -146,121 +132,17 @@ async function createPostgresTables() {
   }
 }
 
-// ===== SQLITE TABLES =====
-function createSqliteTables() {
-  return new Promise((resolve, reject) => {
-    sqliteDb.serialize(() => {
-      sqliteDb.run(`CREATE TABLE IF NOT EXISTS vivienda (
-        id TEXT PRIMARY KEY,
-        tipo TEXT NOT NULL,
-        ciudad TEXT NOT NULL,
-        barrio TEXT NOT NULL,
-        capacidad TEXT NOT NULL,
-        detalles TEXT,
-        nombre_encargado TEXT NOT NULL,
-        contacto TEXT NOT NULL,
-        foto_id TEXT,
-        estado TEXT NOT NULL DEFAULT 'Busca ocupante',
-        fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-        owner_token TEXT,
-        reportes_count INTEGER DEFAULT 0,
-        sospechoso INTEGER DEFAULT 0
-      )`);
-
-      sqliteDb.run(`CREATE TABLE IF NOT EXISTS necesidad_vivienda (
-        id TEXT PRIMARY KEY,
-        nombre_familia TEXT NOT NULL,
-        contacto TEXT NOT NULL,
-        ciudad TEXT NOT NULL,
-        cantidad_personas TEXT NOT NULL,
-        condicion_especial INTEGER DEFAULT 0,
-        descripcion_condicion TEXT,
-        descripcion_vivienda_necesita TEXT NOT NULL,
-        estado TEXT NOT NULL DEFAULT 'Buscando alojamiento',
-        fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-        owner_token TEXT,
-        reportes_count INTEGER DEFAULT 0,
-        sospechoso INTEGER DEFAULT 0
-      )`);
-
-      sqliteDb.run(`CREATE TABLE IF NOT EXISTS centro_acopio (
-        id TEXT PRIMARY KEY,
-        ciudad TEXT NOT NULL,
-        sector TEXT NOT NULL,
-        direccion TEXT NOT NULL,
-        contacto TEXT NOT NULL,
-        fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-        owner_token TEXT,
-        reportes_count INTEGER DEFAULT 0,
-        sospechoso INTEGER DEFAULT 0
-      )`);
-
-      sqliteDb.run(`CREATE TABLE IF NOT EXISTS refugio_mascota (
-        id TEXT PRIMARY KEY,
-        tipo_mascota TEXT NOT NULL,
-        ciudad TEXT NOT NULL,
-        sector TEXT NOT NULL,
-        direccion TEXT NOT NULL,
-        contacto TEXT NOT NULL,
-        fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-        owner_token TEXT,
-        reportes_count INTEGER DEFAULT 0,
-        sospechoso INTEGER DEFAULT 0
-      )`);
-
-      sqliteDb.run(`CREATE TABLE IF NOT EXISTS necesidad_mascota (
-        id TEXT PRIMARY KEY,
-        nombre_encargado TEXT NOT NULL,
-        contacto TEXT NOT NULL,
-        tipo_mascota TEXT NOT NULL,
-        cantidad_mascotas TEXT NOT NULL,
-        fecha_registro DATETIME DEFAULT CURRENT_TIMESTAMP,
-        owner_token TEXT,
-        reportes_count INTEGER DEFAULT 0,
-        sospechoso INTEGER DEFAULT 0
-      )`);
-
-      sqliteDb.run(`CREATE TABLE IF NOT EXISTS foto (
-        id TEXT PRIMARY KEY,
-        vivienda_id TEXT NOT NULL,
-        imagen_base64 TEXT NOT NULL,
-        fecha_carga DATETIME DEFAULT CURRENT_TIMESTAMP
-      )`, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
-    });
-  });
-}
-
-// ===== UNIVERSAL QUERY HELPER =====
+// ===== QUERY =====
+// Las consultas usan placeholders nativos de PostgreSQL ($1, $2...). Antes se escribían
+// con `?` y se traducían aquí con un replace global, herencia de SQLite; ese replace no
+// distinguía un `?` real de uno dentro de un literal de texto.
+// Devuelve siempre un array de filas: [] en las escrituras sin RETURNING.
 async function query(sql, params = []) {
-  if (isPostgres) {
-    // Reemplazar ? con $1, $2 en Postgres SQL
-    let index = 1;
-    const pgSql = sql.replace(/\?/g, () => `$${index++}`);
-    const res = await pgPool.query(pgSql, params);
-    return res.rows;
-  } else {
-    return new Promise((resolve, reject) => {
-      const isSelect = sql.trim().toUpperCase().startsWith('SELECT');
-      if (isSelect) {
-        sqliteDb.all(sql, params, (err, rows) => {
-          if (err) reject(err);
-          else resolve(rows);
-        });
-      } else {
-        sqliteDb.run(sql, params, function (err) {
-          if (err) reject(err);
-          else resolve({ lastID: this.lastID, changes: this.changes });
-        });
-      }
-    });
-  }
+  const res = await pgPool.query(sql, params);
+  return res.rows;
 }
 
 module.exports = {
   initDB,
   query,
-  getIsPostgres: () => isPostgres
 };
