@@ -38,7 +38,21 @@
 
 ## 🟡 BUGS EN PROGRESO (Alguien está trabajando en ellos)
 
-> *No hay bugs en progreso.*
+### BUG-007 — Validación de teléfono acepta más de 10 dígitos (11 dígitos permitidos)
+- **Estado**: 🟡 EN PROGRESO
+- **Severidad**: 🟡 Media
+- **Rama afectada**: `juan`
+- **Reportado por**: Juan Esteban B. — 2026-08-12
+- **Asignado a**: Agente IA
+- **Descripción**: La función `isValidPhone()` en `server/index.js` permitía números de hasta 12 dígitos (`cleaned.length <= 12`), aceptando números telefónicos inválidos de 11 o 12 dígitos en los formularios de registro (incluyendo "Necesito Refugio para Mascota").
+- **Pasos para reproducir**:
+  1. Abrir el formulario "Necesito Refugio para mi Mascota" u otro formulario de registro.
+  2. Ingresar un número telefónico de 11 dígitos (ej: `31012345678`).
+  3. Enviar el formulario.
+- **Resultado esperado**: El formulario exige máximo 10 dígitos y rechaza 11 o más dígitos.
+- **Resultado actual (antes del fix)**: Se aceptaba y guardaba el registro con 11 dígitos.
+- **Commit de fix**: *(pendiente)*
+- **Notas**: Se restringe `isValidPhone` a `7 <= length <= 10`, se corrige la respuesta de validación y se añade `maxlength="10"` a los inputs de tipo tel en `public/app.js`.
 
 ---
 
@@ -233,9 +247,9 @@
 | Categoría | Cantidad |
 |-----------|----------|
 | 🔴 Activos | 0 |
-| 🟡 En Progreso | 0 |
+| 🟡 En Progreso | 1 |
 | ✅ Resueltos | 7 |
 | 📌 Conocidos | 1 |
-| **Total** | **8** |
+| **Total** | **9** |
 
 > Actualizar esta tabla cada vez que cambie el estado de un bug.

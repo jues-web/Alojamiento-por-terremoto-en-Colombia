@@ -98,7 +98,8 @@ function detectAnomaly(ip) {
 function isValidPhone(phone) {
   if (!phone || typeof phone !== 'string') return false;
   const cleaned = phone.replace(/\D/g, '');
-  return cleaned.length >= 7 && cleaned.length <= 12;
+  // Números colombianos: celular (10 dígitos) o fijo local (7 dígitos). Máximo 10.
+  return cleaned.length >= 7 && cleaned.length <= 10;
 }
 
 // Helper para procesar imagen con Sharp (WebP 82/100, strip EXIF GPS, min 500px)
@@ -235,7 +236,7 @@ app.post('/api/viviendas', upload.single('foto'), async (req, res) => {
     }
 
     if (!isValidPhone(contacto)) {
-      return res.status(400).json({ error: 'El número de contacto no es válido. Debe tener entre 7 y 12 dígitos.' });
+      return res.status(400).json({ error: 'El número de contacto no es válido. Debe tener entre 7 y 10 dígitos.' });
     }
 
     const clientIp = req.ip || req.connection.remoteAddress;

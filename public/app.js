@@ -154,7 +154,7 @@ function getFormViviendaHTML() {
 
       <div class="form-group">
         <label>Teléfono de Contacto / WhatsApp <span class="req">*</span></label>
-        <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3101234567" required>
+        <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3101234567" maxlength="10" required>
       </div>
 
       <div class="form-group">
@@ -256,7 +256,7 @@ function getFormNecesidadViviendaHTML() {
 
       <div class="form-group">
         <label>Teléfono de Contacto / WhatsApp <span class="req">*</span></label>
-        <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3201234567" required>
+        <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3201234567" maxlength="10" required>
       </div>
 
       <div class="form-group">
@@ -346,7 +346,7 @@ function getFormCentroAcopioHTML() {
       </div>
       <div class="form-group">
         <label>Teléfono de Contacto <span class="req">*</span></label>
-        <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3151234567" required>
+        <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3151234567" maxlength="10" required>
       </div>
       <button type="submit" class="btn btn-secondary" style="width:100%">Registrar Acopio</button>
     </form>
@@ -398,7 +398,7 @@ function getFormRefugioMascotaHTML() {
       </div>
       <div class="form-group">
         <label>Contacto <span class="req">*</span></label>
-        <input type="tel" name="contacto" class="form-control" required>
+        <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3001234567" maxlength="10" required>
       </div>
       <button type="submit" class="btn btn-secondary" style="width:100%">Ofrecer Refugio</button>
     </form>
@@ -433,7 +433,7 @@ function getFormNecesidadMascotaHTML() {
       </div>
       <div class="form-group">
         <label>Contacto / WhatsApp <span class="req">*</span></label>
-        <input type="tel" name="contacto" class="form-control" required>
+        <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3001234567" maxlength="10" required>
       </div>
       <div class="form-group">
         <label>Tipo de Mascota <span class="req">*</span></label>
