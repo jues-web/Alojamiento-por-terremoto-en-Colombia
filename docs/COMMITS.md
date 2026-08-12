@@ -21,8 +21,17 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
-| *(merge)* | 2026-08-12 | Agente IA | `release(main): fix critico seguridad — credenciales docker-compose via variables de entorno` | ✅ ok |
-| `73e0a92` | 2026-08-12 | Juan Esteban B. | `release(main): MVP v1.0.0 — Plataforma Alojamiento por Terremoto Colombia lista para produccion` | ✅ ok |
+| `2239fd8` | 2026-08-11 | Juan Esteban B. | `docs: create architecture documentation including PRD, project brief, data model, and footer information` | ✅ ok |
+
+> ⚠️ **`main` NO contiene todavía el código de la aplicación.** Verificado el 2026-08-12
+> contra `origin/main`: la rama solo tiene documentación (`docs/`), sin `server/`,
+> `public/` ni `package.json`. El MVP vive únicamente en `juan`.
+>
+> Esta tabla registraba antes dos entradas que **no corresponden a commits reales**:
+> `73e0a92` (`release(main): MVP v1.0.0…`) y una fila `*(merge)*` por el fix de
+> credenciales Docker. Ninguno de esos objetos existe en el repositorio
+> (`git cat-file -t` falla en ambos) y `origin/main` nunca los recibió. Se retiran
+> para que este registro refleje la realidad. Pendiente: `dev` → `main`.
 
 ---
 
@@ -30,9 +39,14 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
-| *(merge)* | 2026-08-12 | Agente IA | `merge(dev): fix seguridad — credenciales docker-compose via variables de entorno` | ✅ ok |
-| `21078ed` | 2026-08-12 | Juan Esteban B. | `merge(dev): integrar MVP completo desde rama juan — Docker, PostgreSQL, Admin Panel, docs/origen` | ✅ ok |
+| *(pendiente)* | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el MVP completo y los fixes de seguridad BUG-001 a BUG-005` | ✅ ok |
 | `db2c582` | 2026-08-11 | Juan Esteban B. | `docs: add user stories and architecture requirements for the emergency housing platform` | ✅ ok |
+
+> ⚠️ Igual que en `main`, se retira la entrada `21078ed`
+> (`merge(dev): integrar MVP completo desde rama juan…`) y la fila `*(merge)*` del fix
+> de credenciales: esos commits no existen en el repositorio y `origin/dev` seguía en
+> `db2c582` (solo documentación). El merge real de `juan` → `dev` es el que encabeza
+> esta tabla.
 
 ---
 
@@ -83,9 +97,9 @@
 
 | Rama | Total Commits | Último Commit | Autor Principal |
 |------|--------------|---------------|-----------------|
-| `main` | 2 | 2026-08-12 | Juan Esteban B. / Agente IA |
-| `dev` | 3 | 2026-08-12 | Juan Esteban B. / Agente IA |
-| `juan` | 12 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `main` | 1 | 2026-08-11 | Juan Esteban B. |
+| `dev` | 2 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `juan` | 13 | 2026-08-12 | Juan Esteban B. / Agente IA |
 | `emmanuel` | 1 | 2026-08-11 | Juan Esteban B. |
 
 > Actualizar esta tabla cada vez que se agreguen commits.
