@@ -54,6 +54,9 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| *(pendiente)* | 2026-08-12 | Agente IA | `docs: cerrar BUG-K001 en BUGS.md y CHANGELOG` | ✅ ok |
+| `397d698` | 2026-08-12 | Agente IA | `fix(ui): dar feedback de red y de validacion en los formularios (BUG-K001)` | ✅ ok |
+| `e446b6e` | 2026-08-12 | Agente IA | `docs(commits): corregir registro de merges a dev y main que nunca ocurrieron` | ✅ ok |
 | *(merge)* | 2026-08-12 | Agente IA | `merge(juan): integrar fix de credenciales docker (78438f5) con los fixes de seguridad locales` | ✅ ok |
 | *(pendiente)* | 2026-08-12 | Agente IA | `docs: cerrar BUG-005 en BUGS.md, CHANGELOG y CLAUDE.md` | ✅ ok |
 | `7d1efdc` | 2026-08-12 | Agente IA | `fix(api): corregir typo en /api/stats que creaba una global implicita (BUG-005)` | ✅ ok |
@@ -99,7 +102,7 @@
 |------|--------------|---------------|-----------------|
 | `main` | 1 | 2026-08-11 | Juan Esteban B. |
 | `dev` | 2 | 2026-08-12 | Juan Esteban B. / Agente IA |
-| `juan` | 13 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `juan` | 15 | 2026-08-12 | Juan Esteban B. / Agente IA |
 | `emmanuel` | 1 | 2026-08-11 | Juan Esteban B. |
 
 > Actualizar esta tabla cada vez que se agreguen commits.

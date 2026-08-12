@@ -16,6 +16,9 @@
 ### Añadido
 - `CLAUDE.md` en la raíz: guía de arquitectura, comandos y protocolo de documentación
   para agentes Claude Code.
+- Helper `enviarFormulario()` en `public/app.js`, compartido por los cinco formularios de
+  registro: bloquea el botón durante el envío (con estado "Enviando..."), distingue los
+  fallos de red de los errores del servidor y muestra el mensaje adecuado en cada caso.
 - Validación de estados permitidos por entidad en los endpoints `PATCH .../estado`
   (`Busca ocupante` / `Ya fue ocupada` y `Buscando alojamiento` / `Ya encontró alojamiento`).
 
@@ -41,6 +44,11 @@
 - **BUG-005**: typo en `GET /api/stats` (`parseIntnecesidades`) que creaba una variable global
   implícita. Funcionaba en modo *sloppy*, pero habría lanzado `ReferenceError` en modo estricto
   o al migrar a ESM, tumbando el contador del banner principal.
+- **BUG-K001**: los cinco formularios de registro no daban feedback útil ante una caída de red
+  (mostraban el texto crudo del navegador en inglés) y tres de ellos ocultaban el mensaje de
+  validación del servidor tras un genérico "Error al guardar". Además, sin bloqueo del botón,
+  el usuario con conexión lenta pulsaba varias veces y su propio registro acababa en cuarentena
+  por la detección de ráfagas.
 
 ### Eliminado
 - Valor por defecto `admin123` de `ADMIN_PASSWORD` en `entrypoint.sh` y `docker-compose.yml`.

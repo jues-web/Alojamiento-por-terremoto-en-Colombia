@@ -126,6 +126,7 @@ Los cinco GET públicos pasan por `sinDatosPrivados()`, que elimina el `owner_to
 
 - **CRLF**: todos los archivos usan terminadores CRLF (repo en OneDrive/Windows). `sed -i 's/...$/.../'` falla silenciosamente sin contemplar el `\r`. Las herramientas Edit/Write los preservan correctamente.
 - **Modo sloppy**: los archivos son CommonJS sin `'use strict'`, así que una asignación a un identificador no declarado crea una global implícita en vez de fallar (fue BUG-005). No hay linter que lo detecte.
-- `docs/BUGS.md` documenta dos bugs conocidos abiertos: falta de feedback ante caída de red en el envío de **formularios** (BUG-K001 — el cambio de estado ya está cubierto) y `pg.Pool` sin reconexión automática tras reinicio de Postgres (BUG-K002).
+- `docs/BUGS.md` documenta un bug conocido abierto: `pg.Pool` sin reconexión automática tras un reinicio de Postgres (BUG-K002).
+- Los cinco envíos de formulario pasan por `enviarFormulario()` en `public/app.js`, que centraliza el bloqueo del botón y el manejo de errores de red y de validación. Un formulario nuevo debe usarlo en vez de llamar a `fetch` directamente.
 - `entrypoint.sh` corre `npm ci --only=production` si falta `node_modules`; con `docker compose` la imagen ya las trae del build stage.
 - Las fotos viajan como base64 dentro del JSON de `GET /api/viviendas`: ~80 KB por registro en cada carga del listado. Relevante para usuarios con datos móviles limitados.
