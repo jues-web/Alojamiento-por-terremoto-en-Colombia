@@ -39,7 +39,8 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
-| *(pendiente)* | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el MVP completo y los fixes de seguridad BUG-001 a BUG-005` | ✅ ok |
+| *(pendiente)* | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el fix BUG-K001 y la entrega de fotos (ADR-008)` | ✅ ok |
+| `93aa4fd` | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el MVP completo y los fixes de seguridad BUG-001 a BUG-005` | ✅ ok |
 | `db2c582` | 2026-08-11 | Juan Esteban B. | `docs: add user stories and architecture requirements for the emergency housing platform` | ✅ ok |
 
 > ⚠️ Igual que en `main`, se retira la entrada `21078ed`
@@ -103,8 +104,8 @@
 | Rama | Total Commits | Último Commit | Autor Principal |
 |------|--------------|---------------|-----------------|
 | `main` | 1 | 2026-08-11 | Juan Esteban B. |
-| `dev` | 2 | 2026-08-12 | Juan Esteban B. / Agente IA |
-| `juan` | 17 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `dev` | 3 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `juan` | 18 | 2026-08-12 | Juan Esteban B. / Agente IA |
 | `emmanuel` | 1 | 2026-08-11 | Juan Esteban B. |
 
 > Actualizar esta tabla cada vez que se agreguen commits.
