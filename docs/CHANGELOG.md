@@ -17,12 +17,19 @@
 *(Aquí van los próximos cambios que aún no tienen versión)*
 
 ### Cambiado
+- `docker-compose.yml`: todas las credenciales ahora se leen desde variables de entorno
+  (`${POSTGRES_USER}`, `${POSTGRES_PASSWORD}`, `${ADMIN_PASSWORD}`, etc.) en lugar de
+  valores hardcodeados. Compatible con Railway, Render, Fly.io y cualquier PaaS.
+- `.env.example`: actualizado con todos los campos requeridos, incluyendo `POSTGRES_USER`,
+  `POSTGRES_PASSWORD`, `POSTGRES_DB` y comentarios de guía para despliegue.
 
 ### Corregido
 
 ### Eliminado
 
 ### Seguridad
+- **CRÍTICO**: eliminadas credenciales de producción hardcodeadas en `docker-compose.yml`.
+  `ADMIN_PASSWORD=admin123` ya no está en el código fuente del repositorio.
 
 ---
 
