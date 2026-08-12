@@ -173,6 +173,58 @@ function getFormViviendaHTML() {
   `;
 }
 
+// ===== ENVÍO DE FORMULARIOS (BUG-K001) =====
+
+// BUG-K001: si la red se caía durante el envío, el usuario veía el mensaje crudo del
+// navegador ("Failed to fetch", "NetworkError..."), en inglés y sin decirle qué hacer.
+// En una zona de emergencia con cobertura intermitente ese es el caso más frecuente.
+const MSG_SIN_CONEXION =
+  'Sin conexión. Verifica tu internet e intenta de nuevo. Tus datos no se han perdido.';
+
+// Envía un formulario y traduce cualquier fallo a un mensaje accionable en español.
+// Devuelve la respuesta del servidor, o null si hubo error (ya notificado al usuario).
+async function enviarFormulario(form, url, body, opciones = {}) {
+  const boton = form.querySelector('button[type="submit"]');
+  const textoOriginal = boton ? boton.innerHTML : '';
+
+  // Bloquea el reenvío mientras la petición está en curso. Con conexión lenta el usuario
+  // tiende a pulsar varias veces: además de duplicar registros, más de 3 envíos en 5
+  // minutos disparan detectAnomaly() (ADR-005) y su propia publicación acaba en cuarentena.
+  if (boton) {
+    boton.disabled = true;
+    boton.innerHTML = 'Enviando...';
+  }
+
+  const restaurarBoton = () => {
+    if (boton) {
+      boton.disabled = false;
+      boton.innerHTML = textoOriginal;
+    }
+  };
+
+  let res;
+  try {
+    res = await fetch(url, { method: 'POST', ...opciones, body });
+  } catch (err) {
+    // fetch solo lanza por fallo de red, DNS o CORS; nunca por un código HTTP de error.
+    restaurarBoton();
+    showToast(MSG_SIN_CONEXION, 'error');
+    return null;
+  }
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    // Se muestra el mensaje concreto del servidor ("Número de contacto inválido", etc.)
+    // en lugar de un genérico, para que el usuario sepa qué corregir.
+    restaurarBoton();
+    showToast(data.error || 'No se pudo guardar el registro. Intenta de nuevo.', 'error');
+    return null;
+  }
+
+  return data;
+}
+
 // Submit Vivienda
 async function submitVivienda(event) {
   event.preventDefault();
@@ -180,21 +232,14 @@ async function submitVivienda(event) {
   const formData = new FormData(form);
   formData.append('owner_token', ownerToken);
 
-  try {
-    const res = await fetch('/api/viviendas', {
-      method: 'POST',
-      body: formData
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al guardar.');
+  // Sin cabecera Content-Type: el navegador la fija con el boundary del multipart.
+  const data = await enviarFormulario(form, '/api/viviendas', formData);
+  if (!data) return;
 
-    showToast('¡Vivienda registrada exitosamente!');
-    closeFormModal();
-    fetchStats();
-    renderAlojamientos();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  showToast('¡Vivienda registrada exitosamente!');
+  closeFormModal();
+  fetchStats();
+  renderAlojamientos();
 }
 
 // Form HTML 2: Necesito Vivienda
@@ -270,22 +315,15 @@ async function submitNecesidadVivienda(event) {
   const dataObj = Object.fromEntries(new FormData(form));
   dataObj.owner_token = ownerToken;
 
-  try {
-    const res = await fetch('/api/necesidades-vivienda', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataObj)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al guardar.');
+  const data = await enviarFormulario(form, '/api/necesidades-vivienda', JSON.stringify(dataObj), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!data) return;
 
-    showToast('¡Solicitud publicada exitosamente!');
-    closeFormModal();
-    fetchStats();
-    renderNecesidades();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  showToast('¡Solicitud publicada exitosamente!');
+  closeFormModal();
+  fetchStats();
+  renderNecesidades();
 }
 
 // Form HTML 3: Centro de Acopio
@@ -317,21 +355,18 @@ function getFormCentroAcopioHTML() {
 
 async function submitCentroAcopio(e) {
   e.preventDefault();
-  const dataObj = Object.fromEntries(new FormData(e.target));
+  const form = e.target;
+  const dataObj = Object.fromEntries(new FormData(form));
   dataObj.owner_token = ownerToken;
-  try {
-    const res = await fetch('/api/centros-acopio', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataObj)
-    });
-    if (!res.ok) throw new Error('Error al guardar');
-    showToast('Centro de acopio registrado.');
-    closeFormModal();
-    renderAlojamientos();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+
+  const data = await enviarFormulario(form, '/api/centros-acopio', JSON.stringify(dataObj), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!data) return;
+
+  showToast('Centro de acopio registrado.');
+  closeFormModal();
+  renderAlojamientos();
 }
 
 // Form HTML 4: Refugio Mascota
@@ -372,19 +407,18 @@ function getFormRefugioMascotaHTML() {
 
 async function submitRefugioMascota(e) {
   e.preventDefault();
-  const dataObj = Object.fromEntries(new FormData(e.target));
+  const form = e.target;
+  const dataObj = Object.fromEntries(new FormData(form));
   dataObj.owner_token = ownerToken;
-  try {
-    const res = await fetch('/api/refugios-mascota', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataObj)
-    });
-    if (!res.ok) throw new Error('Error al registrar refugio');
-    showToast('Refugio registrado.');
-    closeFormModal();
-    renderMascotas();
-  } catch (err) { showToast(err.message, 'error'); }
+
+  const data = await enviarFormulario(form, '/api/refugios-mascota', JSON.stringify(dataObj), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!data) return;
+
+  showToast('Refugio registrado.');
+  closeFormModal();
+  renderMascotas();
 }
 
 // Form HTML 5: Necesidad Mascota
@@ -425,19 +459,18 @@ function getFormNecesidadMascotaHTML() {
 
 async function submitNecesidadMascota(e) {
   e.preventDefault();
-  const dataObj = Object.fromEntries(new FormData(e.target));
+  const form = e.target;
+  const dataObj = Object.fromEntries(new FormData(form));
   dataObj.owner_token = ownerToken;
-  try {
-    const res = await fetch('/api/necesidades-mascota', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataObj)
-    });
-    if (!res.ok) throw new Error('Error al registrar');
-    showToast('Solicitud para mascota registrada.');
-    closeFormModal();
-    renderMascotas();
-  } catch (err) { showToast(err.message, 'error'); }
+
+  const data = await enviarFormulario(form, '/api/necesidades-mascota', JSON.stringify(dataObj), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!data) return;
+
+  showToast('Solicitud para mascota registrada.');
+  closeFormModal();
+  renderMascotas();
 }
 
 // ===== RENDERS DE VISTAS Y LISTAS =====
@@ -477,7 +510,18 @@ async function renderAlojamientos() {
     }
   } catch (e) {}
 
-  // Render Viviendas
+function getPlaceholderImg(tipo) {
+  const icons = {
+    'Casa': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g1)" rx="8"/><path d="M200 45 L280 110 L260 110 L260 160 L140 160 L140 110 L120 110 Z" fill="none" stroke="#38BDF8" stroke-width="6" stroke-linejoin="round"/><path d="M185 160 L185 125 L215 125 L215 160 Z" fill="#38BDF8"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Casa de Alojamiento</text></svg>`,
+    'Apartamento': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g2)" rx="8"/><rect x="150" y="40" width="100" height="120" rx="4" fill="none" stroke="#818CF8" stroke-width="5"/><rect x="170" y="60" width="20" height="20" fill="#818CF8" rx="2"/><rect x="210" y="60" width="20" height="20" fill="#818CF8" rx="2"/><rect x="170" y="95" width="20" height="20" fill="#818CF8" rx="2"/><rect x="210" y="95" width="20" height="20" fill="#818CF8" rx="2"/><rect x="188" y="130" width="24" height="30" fill="#818CF8"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Apartamento Disponible</text></svg>`,
+    'Habitación': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g3)" rx="8"/><path d="M130 140 L130 90 C130 80 140 70 150 70 L250 70 C260 70 270 80 270 90 L270 140 Z" fill="none" stroke="#F43F5E" stroke-width="5"/><rect x="145" y="85" width="45" height="25" fill="#F43F5E" rx="3"/><rect x="210" y="85" width="45" height="25" fill="#F43F5E" rx="3"/><rect x="130" y="115" width="140" height="25" fill="#F43F5E" rx="3"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Habitación Disponible</text></svg>`,
+    'Bodega': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g4)" rx="8"/><path d="M120 150 L120 80 L200 50 L280 80 L280 150 Z" fill="none" stroke="#10B981" stroke-width="5"/><rect x="170" y="100" width="60" height="50" fill="#10B981" rx="2"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Bodega / Espacio de Acopio</text></svg>`
+  };
+  const key = Object.keys(icons).find(k => (tipo || '').toLowerCase().includes(k.toLowerCase())) || 'Casa';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(icons[key]);
+}
+
+// Render Viviendas
   try {
     const res = await fetch('/api/viviendas');
     const viviendas = await res.json();
@@ -488,9 +532,12 @@ async function renderAlojamientos() {
     if (!filtered.length) {
       listViviendasEl.innerHTML = `<p class="empty-msg">No hay viviendas registradas en esta ciudad.</p>`;
     } else {
-      listViviendasEl.innerHTML = filtered.map(v => `
+      listViviendasEl.innerHTML = filtered.map(v => {
+        const placeholder = getPlaceholderImg(v.tipo);
+        const imgSrc = v.foto_id ? `/api/viviendas/${v.id}/foto` : placeholder;
+        return `
         <div class="card">
-          ${v.imagen_base64 ? `<img src="${v.imagen_base64}" class="card-img" alt="Foto vivienda">` : ''}
+          <img src="${imgSrc}" class="card-img" alt="Foto de ${v.tipo}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${placeholder}';">
           <div class="card-header">
             <h4 class="card-title">🏠 ${v.tipo} en ${v.barrio} (${v.ciudad})</h4>
             <span class="badge ${v.estado === 'Busca ocupante' ? 'badge-ok' : 'badge-warning'}">${v.estado}</span>
@@ -508,7 +555,8 @@ async function renderAlojamientos() {
             <button class="btn btn-outline btn-sm" onclick="reportar('vivienda', '${v.id}')">🚩 Reportar</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
   } catch (e) {}
 }
@@ -602,8 +650,15 @@ async function toggleEstadoVivienda(id, estadoActual) {
     if (res.ok) {
       showToast(`Estado actualizado a: ${nuevoEstado}`);
       renderAlojamientos();
+      return;
     }
-  } catch (e) {}
+    // BUG-003: el servidor ahora responde 403 si no eres el autor. Sin este mensaje
+    // el botón parecía roto (no pasaba nada al hacer clic).
+    const data = await res.json().catch(() => ({}));
+    showToast(data.error || 'No se pudo actualizar el estado.', 'error');
+  } catch (e) {
+    showToast('Sin conexión. Verifica tu internet e intenta de nuevo.', 'error');
+  }
 }
 
 async function toggleEstadoNecesidad(id, estadoActual) {
@@ -617,8 +672,13 @@ async function toggleEstadoNecesidad(id, estadoActual) {
     if (res.ok) {
       showToast(`Estado actualizado a: ${nuevoEstado}`);
       renderNecesidades();
+      return;
     }
-  } catch (e) {}
+    const data = await res.json().catch(() => ({}));
+    showToast(data.error || 'No se pudo actualizar el estado.', 'error');
+  } catch (e) {
+    showToast('Sin conexión. Verifica tu internet e intenta de nuevo.', 'error');
+  }
 }
 
 // Reporte Comunitario Anti-Spam

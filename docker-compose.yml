@@ -28,7 +28,10 @@ services:
       PORT: ${PORT:-3000}
       NODE_ENV: ${NODE_ENV:-production}
       DATABASE_URL: ${DATABASE_URL:-postgresql://postgres:postgres@db:5432/alojamiento_db}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      # BUG-002: sin valor por defecto y con `:?` para que falle con un mensaje claro si
+      # no está definida. Con `${ADMIN_PASSWORD}` a secas se pasaría una cadena vacía y el
+      # error aparecería más tarde, ya dentro del contenedor.
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Define ADMIN_PASSWORD en tu archivo .env (ver .env.example)}
     depends_on:
       db:
         condition: service_healthy
