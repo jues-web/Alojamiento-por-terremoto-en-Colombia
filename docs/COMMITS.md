@@ -21,17 +21,9 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| `48df43f` | 2026-08-12 | Agente IA | `merge(main): integrar desde dev el MVP v1.0.0 completo preparado para despliegue` | ✅ ok |
 | `2239fd8` | 2026-08-11 | Juan Esteban B. | `docs: create architecture documentation including PRD, project brief, data model, and footer information` | ✅ ok |
 
-> ⚠️ **`main` NO contiene todavía el código de la aplicación.** Verificado el 2026-08-12
-> contra `origin/main`: la rama solo tiene documentación (`docs/`), sin `server/`,
-> `public/` ni `package.json`. El MVP vive únicamente en `juan`.
->
-> Esta tabla registraba antes dos entradas que **no corresponden a commits reales**:
-> `73e0a92` (`release(main): MVP v1.0.0…`) y una fila `*(merge)*` por el fix de
-> credenciales Docker. Ninguno de esos objetos existe en el repositorio
-> (`git cat-file -t` falla en ambos) y `origin/main` nunca los recibió. Se retiran
-> para que este registro refleje la realidad. Pendiente: `dev` → `main`.
 
 ---
 
