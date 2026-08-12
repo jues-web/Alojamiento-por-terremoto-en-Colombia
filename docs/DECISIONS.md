@@ -247,3 +247,62 @@ sin servidor escuchando.
 - Contrapartida: `docker-compose.yml` define `NODE_ENV=production`, así que el stack local
   también exige PostgreSQL. Es coherente —ese stack existe para replicar producción— pero
   conviene saberlo antes de levantar el compose.
+
+---
+
+## ADR-008 — Las fotos se sirven en un endpoint aparte, no embebidas en el listado
+
+- **Fecha**: 2026-08-12
+- **Estado**: ✅ Aceptado
+- **Autor(es)**: Agente IA
+- **Rama**: `juan`
+- **Complementa**: ADR-002 (que sigue vigente: define cómo se *procesan* y *almacenan* las
+  imágenes; este ADR decide cómo se *entregan*)
+
+### Contexto
+El ADR-002 estableció guardar cada foto como data URI base64 en la columna
+`foto.imagen_base64`. La entrega, en cambio, nunca se decidió explícitamente: el listado
+`GET /api/viviendas` hacía `LEFT JOIN foto` y devolvía el data URI completo de cada
+vivienda dentro del JSON.
+
+Eso significa que la carga inicial de la pestaña "Dónde Alojarse" descarga todas las fotos
+de golpe, sin caché y sin posibilidad de cancelarlas. Con las 30 viviendas que el
+Project Brief fija como métrica de éxito a 72 horas, son varios MB en una sola petición
+—medido con una vivienda real: 616 KB de JSON por registro con foto—. El mismo brief
+describe a sus usuarios navegando "muchas veces con datos limitados" (MUST-HAVE #5) y pide
+un "modo de solo lectura optimizado" entre los *nice-to-have*.
+
+### Opciones consideradas
+1. **Dejarlo como está** — cero trabajo, pero contradice frontalmente el MUST-HAVE #5 y
+   encarece el ancho de banda del hosting gratuito.
+2. **Paginar el listado** — reduce el problema pero no lo resuelve: cada página sigue
+   arrastrando las fotos embebidas, y añade complejidad de estado en el cliente.
+3. **Mover las imágenes a almacenamiento de objetos (S3, R2)** — lo correcto a gran escala,
+   pero añade un proveedor externo, credenciales y coste, justo lo que el MVP evita.
+4. **Endpoint dedicado por foto, sirviendo binario** — sin dependencias nuevas, sin cambiar
+   el esquema y compatible con la caché del navegador.
+
+### Decisión
+Opción 4. `GET /api/viviendas` deja de incluir la imagen; el campo `foto_id`, que ya viajaba
+en `v.*`, indica si hay foto que pedir. Se añade `GET /api/viviendas/:id/foto`, que decodifica
+el data URI almacenado y responde **WebP binario** con `Content-Type: image/webp` y
+`Cache-Control: public, max-age=31536000, immutable`. El cliente las solicita con
+`loading="lazy"`, de modo que sólo se descargan las que entran en pantalla.
+
+El almacenamiento no cambia: la columna sigue guardando base64, tal como fijó el ADR-002.
+Sólo cambia la entrega.
+
+### Consecuencias
+- El JSON del listado pasa de ~616 KB por vivienda con foto a ~640 bytes.
+- Transmitir bytes crudos elimina el ~25-33 % de sobrecarga que añade la codificación base64.
+- Las fotos quedan cacheadas por el navegador de forma indefinida. Es seguro porque el
+  Project Brief excluye explícitamente editar un registro una vez enviado: la imagen de un
+  `id` dado nunca cambia.
+- **Cambio incompatible en la API**: las respuestas de `GET /api/viviendas` ya no incluyen
+  `imagen_base64`. Cualquier consumidor externo tendría que adaptarse. Hoy el único
+  consumidor es `public/app.js`, ya actualizado.
+- El endpoint aplica el mismo filtro `sospechoso = false` que el listado, para que la foto
+  de un registro en cuarentena no siga siendo accesible por URL directa.
+- Deuda pendiente: guardar base64 en la base de datos sigue costando ~33 % de espacio extra
+  y obliga a decodificar en cada petición no cacheada. Migrar la columna a `BYTEA`/`BLOB`
+  sería el siguiente paso natural, y requeriría su propio ADR y una migración de datos.

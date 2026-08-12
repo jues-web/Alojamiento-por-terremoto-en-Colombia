@@ -160,22 +160,43 @@
   Se revisó además el resto de `server/index.js`, `server/db.js` y `public/app.js` en busca
   de otras asignaciones dobles del mismo tipo: no hay ninguna.
 
+### BUG-K001 — Desconexión de red durante envío de formulario no tiene feedback visual
+- **Estado**: ✅ RESUELTO
+- **Severidad**: 🟡 Media
+- **Rama afectada**: Todas
+- **Reportado por**: Juan Esteban B. — 2026-08-12
+- **Asignado a**: Agente IA
+- **Descripción**: Si la red caía mientras se enviaba un formulario, el usuario no veía
+  ningún mensaje útil. Al auditarlo aparecieron tres problemas distintos, no uno:
+  1. El `catch` mostraba `err.message` tal cual, es decir el texto crudo del navegador
+     (`Failed to fetch`, `NetworkError...`), en inglés y sin indicar qué hacer.
+  2. `submitCentroAcopio()`, `submitRefugioMascota()` y `submitNecesidadMascota()`
+     descartaban la respuesta del servidor con `throw new Error('Error al guardar')`.
+     Un teléfono inválido producía "Error al guardar" en lugar de "Número de contacto
+     inválido", dejando al usuario sin saber qué corregir.
+  3. No había protección contra el doble envío.
+- **Pasos para reproducir**:
+  1. Abrir cualquier formulario de registro.
+  2. Desactivar la red (modo avión) y pulsar el botón de envío.
+  3. Antes: mensaje en inglés incomprensible. Ahora: aviso claro en español.
+- **Resultado esperado**: Mensaje de error amigable "Sin conexión. Verifica tu internet."
+- **Resultado actual (antes del fix)**: Texto crudo del navegador, o mensaje genérico que
+  ocultaba el error real de validación.
+- **Commit de fix**: `397d698`
+- **Notas**: La lógica se extrajo al helper `enviarFormulario()`, compartido por los cinco
+  envíos, que además tolera respuestas de error sin cuerpo JSON válido (un 502 de proxy ya
+  no rompe el manejo de errores). El bloqueo del botón durante el envío es relevante más
+  allá de la usabilidad: con conexión lenta el usuario pulsaba varias veces y superaba los
+  3 envíos en 5 minutos de `detectAnomaly()` (ADR-005), con lo que su propia publicación
+  legítima acababa en cuarentena. Verificado con 15 asertos sobre `public/app.js` ejecutado
+  en un contexto simulado, cubriendo red caída, error 400, éxito y 502 sin JSON.
+  El flujo de cambio de estado ya se había cubierto antes en BUG-004.
+
 ---
 
 ## 📌 BUGS CONOCIDOS (Sin prioridad de fix inmediato)
 
 > Estos son comportamientos conocidos que no bloquean el MVP pero deben atenderse.
-
-### BUG-K001 — Desconexión de red durante envío de formulario no tiene feedback visual
-- **Estado**: 📌 CONOCIDO
-- **Severidad**: 🟡 Media
-- **Rama afectada**: Todas
-- **Reportado por**: Juan Esteban B. — 2026-08-12
-- **Descripción**: Si la red cae mientras se envía el formulario, el usuario no ve ningún
-  mensaje de error claro. El formulario simplemente no responde.
-- **Resultado esperado**: Mensaje de error amigable "Sin conexión. Verifica tu internet."
-- **Commit de fix**: *(pendiente)*
-- **Notas**: Identificado en el workflow de QA (Fase 1, sección 1.3).
 
 ### BUG-K002 — Reinicio inesperado de contenedor PostgreSQL pierde conexiones activas
 - **Estado**: 📌 CONOCIDO
@@ -196,8 +217,8 @@
 |-----------|----------|
 | 🔴 Activos | 0 |
 | 🟡 En Progreso | 0 |
-| ✅ Resueltos | 5 |
-| 📌 Conocidos | 2 |
+| ✅ Resueltos | 6 |
+| 📌 Conocidos | 1 |
 | **Total** | **7** |
 
 > Actualizar esta tabla cada vez que cambie el estado de un bug.

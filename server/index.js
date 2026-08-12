@@ -158,16 +158,53 @@ app.get('/api/stats', async (req, res) => {
 });
 
 // ===== 1. VIVIENDAS =====
+// El listado NO incluye las fotos. Antes hacía LEFT JOIN foto y devolvía el data URI
+// base64 completo de cada vivienda (~80 KB por registro): con 30 viviendas eran ~2,4 MB
+// en cada carga de la pestaña, para usuarios que a menudo navegan con datos limitados.
+// Las imágenes se piden ahora una a una por GET /api/viviendas/:id/foto, y sólo cuando
+// entran en pantalla (loading="lazy" en el cliente). El campo `foto_id` que ya viaja en
+// `v.*` indica si hay foto que pedir.
 app.get('/api/viviendas', async (req, res) => {
   try {
     const rows = await query(`
-      SELECT v.*, f.imagen_base64 
-      FROM vivienda v 
-      LEFT JOIN foto f ON v.foto_id = f.id 
-      WHERE v.sospechoso = false 
+      SELECT v.*
+      FROM vivienda v
+      WHERE v.sospechoso = false
       ORDER BY v.fecha_registro DESC
     `);
     res.json(sinDatosPrivados(rows));
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Sirve la foto de una vivienda como WebP binario, no como base64. Además de sacarla del
+// listado, transmitir los bytes crudos ahorra el ~33 % de sobrecarga que añade base64.
+app.get('/api/viviendas/:id/foto', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rows = await query(
+      `SELECT f.imagen_base64
+       FROM vivienda v
+       JOIN foto f ON v.foto_id = f.id
+       WHERE v.id = ? AND v.sospechoso = false`,
+      [id]
+    );
+
+    if (!rows.length || !rows[0].imagen_base64) {
+      return res.status(404).json({ error: 'Foto no encontrada.' });
+    }
+
+    // La columna guarda un data URI ("data:image/webp;base64,...."); se extraen los bytes.
+    const base64 = String(rows[0].imagen_base64).replace(/^data:image\/[\w+.-]+;base64,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+
+    // Las fotos son inmutables: el Project Brief no permite editar un registro una vez
+    // enviado, así que el navegador puede cachearlas indefinidamente.
+    res.set('Content-Type', 'image/webp');
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Content-Length', buffer.length);
+    res.send(buffer);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

@@ -173,6 +173,58 @@ function getFormViviendaHTML() {
   `;
 }
 
+// ===== ENVÍO DE FORMULARIOS (BUG-K001) =====
+
+// BUG-K001: si la red se caía durante el envío, el usuario veía el mensaje crudo del
+// navegador ("Failed to fetch", "NetworkError..."), en inglés y sin decirle qué hacer.
+// En una zona de emergencia con cobertura intermitente ese es el caso más frecuente.
+const MSG_SIN_CONEXION =
+  'Sin conexión. Verifica tu internet e intenta de nuevo. Tus datos no se han perdido.';
+
+// Envía un formulario y traduce cualquier fallo a un mensaje accionable en español.
+// Devuelve la respuesta del servidor, o null si hubo error (ya notificado al usuario).
+async function enviarFormulario(form, url, body, opciones = {}) {
+  const boton = form.querySelector('button[type="submit"]');
+  const textoOriginal = boton ? boton.innerHTML : '';
+
+  // Bloquea el reenvío mientras la petición está en curso. Con conexión lenta el usuario
+  // tiende a pulsar varias veces: además de duplicar registros, más de 3 envíos en 5
+  // minutos disparan detectAnomaly() (ADR-005) y su propia publicación acaba en cuarentena.
+  if (boton) {
+    boton.disabled = true;
+    boton.innerHTML = 'Enviando...';
+  }
+
+  const restaurarBoton = () => {
+    if (boton) {
+      boton.disabled = false;
+      boton.innerHTML = textoOriginal;
+    }
+  };
+
+  let res;
+  try {
+    res = await fetch(url, { method: 'POST', ...opciones, body });
+  } catch (err) {
+    // fetch solo lanza por fallo de red, DNS o CORS; nunca por un código HTTP de error.
+    restaurarBoton();
+    showToast(MSG_SIN_CONEXION, 'error');
+    return null;
+  }
+
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    // Se muestra el mensaje concreto del servidor ("Número de contacto inválido", etc.)
+    // en lugar de un genérico, para que el usuario sepa qué corregir.
+    restaurarBoton();
+    showToast(data.error || 'No se pudo guardar el registro. Intenta de nuevo.', 'error');
+    return null;
+  }
+
+  return data;
+}
+
 // Submit Vivienda
 async function submitVivienda(event) {
   event.preventDefault();
@@ -180,21 +232,14 @@ async function submitVivienda(event) {
   const formData = new FormData(form);
   formData.append('owner_token', ownerToken);
 
-  try {
-    const res = await fetch('/api/viviendas', {
-      method: 'POST',
-      body: formData
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al guardar.');
+  // Sin cabecera Content-Type: el navegador la fija con el boundary del multipart.
+  const data = await enviarFormulario(form, '/api/viviendas', formData);
+  if (!data) return;
 
-    showToast('¡Vivienda registrada exitosamente!');
-    closeFormModal();
-    fetchStats();
-    renderAlojamientos();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  showToast('¡Vivienda registrada exitosamente!');
+  closeFormModal();
+  fetchStats();
+  renderAlojamientos();
 }
 
 // Form HTML 2: Necesito Vivienda
@@ -270,22 +315,15 @@ async function submitNecesidadVivienda(event) {
   const dataObj = Object.fromEntries(new FormData(form));
   dataObj.owner_token = ownerToken;
 
-  try {
-    const res = await fetch('/api/necesidades-vivienda', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataObj)
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Error al guardar.');
+  const data = await enviarFormulario(form, '/api/necesidades-vivienda', JSON.stringify(dataObj), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!data) return;
 
-    showToast('¡Solicitud publicada exitosamente!');
-    closeFormModal();
-    fetchStats();
-    renderNecesidades();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+  showToast('¡Solicitud publicada exitosamente!');
+  closeFormModal();
+  fetchStats();
+  renderNecesidades();
 }
 
 // Form HTML 3: Centro de Acopio
@@ -317,21 +355,18 @@ function getFormCentroAcopioHTML() {
 
 async function submitCentroAcopio(e) {
   e.preventDefault();
-  const dataObj = Object.fromEntries(new FormData(e.target));
+  const form = e.target;
+  const dataObj = Object.fromEntries(new FormData(form));
   dataObj.owner_token = ownerToken;
-  try {
-    const res = await fetch('/api/centros-acopio', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataObj)
-    });
-    if (!res.ok) throw new Error('Error al guardar');
-    showToast('Centro de acopio registrado.');
-    closeFormModal();
-    renderAlojamientos();
-  } catch (err) {
-    showToast(err.message, 'error');
-  }
+
+  const data = await enviarFormulario(form, '/api/centros-acopio', JSON.stringify(dataObj), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!data) return;
+
+  showToast('Centro de acopio registrado.');
+  closeFormModal();
+  renderAlojamientos();
 }
 
 // Form HTML 4: Refugio Mascota
@@ -372,19 +407,18 @@ function getFormRefugioMascotaHTML() {
 
 async function submitRefugioMascota(e) {
   e.preventDefault();
-  const dataObj = Object.fromEntries(new FormData(e.target));
+  const form = e.target;
+  const dataObj = Object.fromEntries(new FormData(form));
   dataObj.owner_token = ownerToken;
-  try {
-    const res = await fetch('/api/refugios-mascota', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataObj)
-    });
-    if (!res.ok) throw new Error('Error al registrar refugio');
-    showToast('Refugio registrado.');
-    closeFormModal();
-    renderMascotas();
-  } catch (err) { showToast(err.message, 'error'); }
+
+  const data = await enviarFormulario(form, '/api/refugios-mascota', JSON.stringify(dataObj), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!data) return;
+
+  showToast('Refugio registrado.');
+  closeFormModal();
+  renderMascotas();
 }
 
 // Form HTML 5: Necesidad Mascota
@@ -425,19 +459,18 @@ function getFormNecesidadMascotaHTML() {
 
 async function submitNecesidadMascota(e) {
   e.preventDefault();
-  const dataObj = Object.fromEntries(new FormData(e.target));
+  const form = e.target;
+  const dataObj = Object.fromEntries(new FormData(form));
   dataObj.owner_token = ownerToken;
-  try {
-    const res = await fetch('/api/necesidades-mascota', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(dataObj)
-    });
-    if (!res.ok) throw new Error('Error al registrar');
-    showToast('Solicitud para mascota registrada.');
-    closeFormModal();
-    renderMascotas();
-  } catch (err) { showToast(err.message, 'error'); }
+
+  const data = await enviarFormulario(form, '/api/necesidades-mascota', JSON.stringify(dataObj), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+  if (!data) return;
+
+  showToast('Solicitud para mascota registrada.');
+  closeFormModal();
+  renderMascotas();
 }
 
 // ===== RENDERS DE VISTAS Y LISTAS =====
@@ -490,7 +523,7 @@ async function renderAlojamientos() {
     } else {
       listViviendasEl.innerHTML = filtered.map(v => `
         <div class="card">
-          ${v.imagen_base64 ? `<img src="${v.imagen_base64}" class="card-img" alt="Foto vivienda">` : ''}
+          ${v.foto_id ? `<img src="/api/viviendas/${v.id}/foto" class="card-img" alt="Foto de la vivienda" loading="lazy" decoding="async">` : ''}
           <div class="card-header">
             <h4 class="card-title">🏠 ${v.tipo} en ${v.barrio} (${v.ciudad})</h4>
             <span class="badge ${v.estado === 'Busca ocupante' ? 'badge-ok' : 'badge-warning'}">${v.estado}</span>

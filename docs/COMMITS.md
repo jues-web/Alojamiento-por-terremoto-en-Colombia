@@ -39,7 +39,8 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
-| *(pendiente)* | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el MVP completo y los fixes de seguridad BUG-001 a BUG-005` | ✅ ok |
+| *(pendiente)* | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el fix BUG-K001 y la entrega de fotos (ADR-008)` | ✅ ok |
+| `93aa4fd` | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el MVP completo y los fixes de seguridad BUG-001 a BUG-005` | ✅ ok |
 | `db2c582` | 2026-08-11 | Juan Esteban B. | `docs: add user stories and architecture requirements for the emergency housing platform` | ✅ ok |
 
 > ⚠️ Igual que en `main`, se retira la entrada `21078ed`
@@ -54,6 +55,11 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| *(pendiente)* | 2026-08-12 | Agente IA | `docs: registrar ADR-008 sobre la entrega de fotos y el cambio de API` | ✅ ok |
+| `f689467` | 2026-08-12 | Agente IA | `perf(api): servir las fotos aparte en vez de embeberlas en el listado` | ✅ ok |
+| `ef918fb` | 2026-08-12 | Agente IA | `docs: cerrar BUG-K001 en BUGS.md y CHANGELOG` | ✅ ok |
+| `397d698` | 2026-08-12 | Agente IA | `fix(ui): dar feedback de red y de validacion en los formularios (BUG-K001)` | ✅ ok |
+| `e446b6e` | 2026-08-12 | Agente IA | `docs(commits): corregir registro de merges a dev y main que nunca ocurrieron` | ✅ ok |
 | *(merge)* | 2026-08-12 | Agente IA | `merge(juan): integrar fix de credenciales docker (78438f5) con los fixes de seguridad locales` | ✅ ok |
 | *(pendiente)* | 2026-08-12 | Agente IA | `docs: cerrar BUG-005 en BUGS.md, CHANGELOG y CLAUDE.md` | ✅ ok |
 | `7d1efdc` | 2026-08-12 | Agente IA | `fix(api): corregir typo en /api/stats que creaba una global implicita (BUG-005)` | ✅ ok |
@@ -98,8 +104,8 @@
 | Rama | Total Commits | Último Commit | Autor Principal |
 |------|--------------|---------------|-----------------|
 | `main` | 1 | 2026-08-11 | Juan Esteban B. |
-| `dev` | 2 | 2026-08-12 | Juan Esteban B. / Agente IA |
-| `juan` | 13 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `dev` | 3 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `juan` | 18 | 2026-08-12 | Juan Esteban B. / Agente IA |
 | `emmanuel` | 1 | 2026-08-11 | Juan Esteban B. |
 
 > Actualizar esta tabla cada vez que se agreguen commits.
