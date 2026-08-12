@@ -17,6 +17,3 @@ Una página web donde cualquier persona registra o consulta, en formularios simp
 
 *MÉTRICA DE ÉXITO:*
 Al menos 30 viviendas u ofertas de refugio registradas en las primeras 72 horas, y que el 50% de las familias que registran "Necesito vivienda" actualicen su estado a "Ya encontró alojamiento" dentro de los primeros 7 días.
-
-
-El punto del "NO ES" que más te va a proteger acá es el del chat y la verificación de identidad: son justo las dos cosas que en la sesión 3 con tus amigos programadores les va a dar tentación de agregar ("total ya tenemos el formulario, para qué el usuario tiene que buscar el WhatsApp aparte"), y son las dos que más tiempo consumen y más responsabilidad legal implican si algo sale mal.

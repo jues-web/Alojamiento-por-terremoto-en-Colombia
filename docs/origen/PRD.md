@@ -20,6 +20,3 @@
 3. Notificaciones automáticas cuando aparece una vivienda nueva en tu ciudad.
 4. Traducción a otros idiomas para ayuda internacional.
 5. Exportar los datos a Excel para reportarlos a la UNGRD o Cruz Roja.
-
-
-El punto más importante para congelar ahora es el #3 del MUST-HAVE: el campo de contacto obligatorio. Es fácil que en el camino alguien proponga "mejor que el contacto sea opcional para proteger la privacidad", pero sin ese dato la página se vuelve inútil — mejor resolver la privacidad con una nota tipo "este número solo se usa para que te contacten, no lo publicamos en ningún otro sitio" que quitando el campo.

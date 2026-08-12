@@ -66,8 +66,3 @@ NecesidadVivienda   [entidad independiente, sin FK hacia Vivienda]
 CentroAcopio        [entidad independiente]
 RefugioMascota       [entidad independiente]
 NecesidadMascota    [entidad independiente]
-
-
-*Por qué no hay relaciones entre Vivienda y NecesidadVivienda (ni entre RefugioMascota y NecesidadMascota):* en el PRD dejamos explícito que la página no intermedia ni hace match automático — el contacto ocurre por fuera de la plataforma. Si en la sesión 3 alguien propone "agreguemos una tabla Match que conecte a quien ofrece con quien busca", eso ya es una feature nueva de matching que no estaba en el alcance original y que multiplicaría la complejidad (¿quién confirma el match? ¿qué pasa si dos familias piden la misma vivienda? ¿se necesita notificación?). Ese es exactamente el tipo de "candado" que el NO ES del brief debería frenar.
-
-Una decisión que sí vale la pena confirmar contigo: guardar imagen_base64 directo en la base de datos funciona para el MVP, pero si crece mucho el volumen de fotos conviene moverlas a un storage de archivos (ej. S3, Supabase Storage) y dejar en Foto solo la URL. Para el lanzamiento inicial, base64 es suficiente y más simple de implementar.
