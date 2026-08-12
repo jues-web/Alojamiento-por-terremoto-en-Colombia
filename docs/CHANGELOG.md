@@ -20,11 +20,17 @@
   (`Busca ocupante` / `Ya fue ocupada` y `Buscando alojamiento` / `Ya encontró alojamiento`).
 
 ### Cambiado
+- `docker-compose.yml`: todas las credenciales ahora se leen desde variables de entorno
+  (`${POSTGRES_USER}`, `${POSTGRES_PASSWORD}`, `${ADMIN_PASSWORD}`, etc.) en lugar de
+  valores hardcodeados. Compatible con Railway, Render, Fly.io y cualquier PaaS.
+  `ADMIN_PASSWORD` usa además la sintaxis `${VAR:?mensaje}` para fallar de inmediato con
+  una explicación si no está definida, en vez de propagar una cadena vacía al contenedor.
+- `.env.example`: actualizado con todos los campos requeridos, incluyendo `POSTGRES_USER`,
+  `POSTGRES_PASSWORD`, `POSTGRES_DB`, comentarios de guía para despliegue, el uso de
+  `?sslmode=require` en proveedores gestionados y cómo generar una clave admin fuerte.
 - **PostgreSQL es obligatorio en producción** (ADR-007). Con `NODE_ENV=production`, la app
   ya no cae a SQLite: falla al arrancar con un mensaje explícito y `exit(1)`. En desarrollo
   el fallback sigue igual.
-- `docker-compose.yml` toma `ADMIN_PASSWORD` desde `.env` en vez de tenerla escrita.
-- `.env.example` documenta cómo generar una clave admin fuerte y el uso de `?sslmode=require`.
 - `toggleEstadoVivienda()` y `toggleEstadoNecesidad()` muestran el error del servidor y los
   fallos de red mediante `showToast`, en vez de fallar en silencio.
 
@@ -40,9 +46,11 @@
 - Valor por defecto `admin123` de `ADMIN_PASSWORD` en `entrypoint.sh` y `docker-compose.yml`.
 
 ### Seguridad
+- **CRÍTICO**: eliminadas credenciales de producción hardcodeadas en `docker-compose.yml`.
+  `ADMIN_PASSWORD=admin123` ya no está en el código fuente del repositorio.
 - **BUG-002**: en producción se rechaza el arranque si `ADMIN_PASSWORD` falta, mide menos de
-  12 caracteres o es una clave débil conocida. Evita desplegar con el panel de eliminación
-  de registros abierto al público.
+  12 caracteres o es una clave débil conocida. Complementa el punto anterior: quitarla del
+  repositorio evita filtrarla, y esta validación evita desplegar sin haberla definido.
 - **BUG-003**: `PATCH /api/viviendas/:id/estado` y `PATCH /api/necesidades-vivienda/:id/estado`
   exigen ahora el `owner_token` del autor (o la clave admin vía `x-admin-key`). Antes cualquiera
   podía cambiar el estado de cualquier registro y vaciar los listados.
