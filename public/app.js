@@ -482,33 +482,44 @@ async function renderAlojamientos() {
   // Render Centros de Acopio
   try {
     const res = await fetch('/api/centros-acopio');
-    const centros = await res.json();
     const listAcopioEl = document.getElementById('list-centros-acopio');
 
-    const filtered = (ciudadSel === 'TODAS') ? centros : centros.filter(c => c.ciudad.toLowerCase() === ciudadSel.toLowerCase());
-
-    if (!filtered.length) {
-      listAcopioEl.innerHTML = `<p class="empty-msg">No hay centros de acopio registrados en esta ciudad.</p>`;
+    if (!res.ok) {
+      const msg = res.status === 429 ? 'Demasiadas peticiones. Intenta de nuevo en unos minutos.' : 'Error al cargar centros de acopio.';
+      listAcopioEl.innerHTML = `<p class="empty-msg">${msg}</p>`;
     } else {
-      listAcopioEl.innerHTML = filtered.map(c => `
-        <div class="card">
-          <div class="card-header">
-            <h4 class="card-title">📦 ${c.sector} (${c.ciudad})</h4>
-            <span class="card-time">${getRelativeTime(c.fecha_registro)}</span>
-          </div>
-          <div class="card-body">
-            <p><strong>Dirección:</strong> ${c.direccion}</p>
-            <p><strong>Contacto:</strong> ${c.contacto}</p>
-          </div>
-          <div class="card-actions">
-            <a href="tel:${c.contacto.replace(/\D/g,'')}" class="btn btn-secondary btn-sm">📞 Llamar</a>
-            <a href="https://wa.me/57${c.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>
-            <button class="btn btn-outline btn-sm" onclick="reportar('centro_acopio', '${c.id}')">🚩 Reportar</button>
-          </div>
-        </div>
-      `).join('');
+      const centros = await res.json();
+      if (!Array.isArray(centros)) {
+        listAcopioEl.innerHTML = `<p class="empty-msg">Error en formato de datos de centros de acopio.</p>`;
+      } else {
+        const filtered = (ciudadSel === 'TODAS') ? centros : centros.filter(c => c.ciudad.toLowerCase() === ciudadSel.toLowerCase());
+
+        if (!filtered.length) {
+          listAcopioEl.innerHTML = `<p class="empty-msg">No hay centros de acopio registrados en esta ciudad.</p>`;
+        } else {
+          listAcopioEl.innerHTML = filtered.map(c => `
+            <div class="card">
+              <div class="card-header">
+                <h4 class="card-title">📦 ${c.sector} (${c.ciudad})</h4>
+                <span class="card-time">${getRelativeTime(c.fecha_registro)}</span>
+              </div>
+              <div class="card-body">
+                <p><strong>Dirección:</strong> ${c.direccion}</p>
+                <p><strong>Contacto:</strong> ${c.contacto}</p>
+              </div>
+              <div class="card-actions">
+                <a href="tel:${c.contacto.replace(/\D/g,'')}" class="btn btn-secondary btn-sm">📞 Llamar</a>
+                <a href="https://wa.me/57${c.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>
+                <button class="btn btn-outline btn-sm" onclick="reportar('centro_acopio', '${c.id}')">🚩 Reportar</button>
+              </div>
+            </div>
+          `).join('');
+        }
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    document.getElementById('list-centros-acopio').innerHTML = `<p class="empty-msg">Error de conexión al cargar centros de acopio.</p>`;
+  }
 
 function getPlaceholderImg(tipo) {
   const icons = {
@@ -524,50 +535,70 @@ function getPlaceholderImg(tipo) {
 // Render Viviendas
   try {
     const res = await fetch('/api/viviendas');
-    const viviendas = await res.json();
     const listViviendasEl = document.getElementById('list-viviendas');
 
-    const filtered = (ciudadSel === 'TODAS') ? viviendas : viviendas.filter(v => v.ciudad.toLowerCase() === ciudadSel.toLowerCase());
-
-    if (!filtered.length) {
-      listViviendasEl.innerHTML = `<p class="empty-msg">No hay viviendas registradas en esta ciudad.</p>`;
+    if (!res.ok) {
+      const msg = res.status === 429 ? 'Demasiadas peticiones. Intenta de nuevo en unos minutos.' : 'Error al cargar viviendas.';
+      listViviendasEl.innerHTML = `<p class="empty-msg">${msg}</p>`;
     } else {
-      listViviendasEl.innerHTML = filtered.map(v => {
-        const placeholder = getPlaceholderImg(v.tipo);
-        const imgSrc = v.foto_id ? `/api/viviendas/${v.id}/foto` : placeholder;
-        return `
-        <div class="card">
-          <img src="${imgSrc}" class="card-img" alt="Foto de ${v.tipo}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${placeholder}';">
-          <div class="card-header">
-            <h4 class="card-title">🏠 ${v.tipo} en ${v.barrio} (${v.ciudad})</h4>
-            <span class="badge ${v.estado === 'Busca ocupante' ? 'badge-ok' : 'badge-warning'}">${v.estado}</span>
-          </div>
-          <div class="card-body">
-            <p><strong>Capacidad:</strong> ${v.capacidad}</p>
-            <p><strong>Encargado:</strong> ${v.nombre_encargado}</p>
-            <p><strong>Contacto:</strong> ${v.contacto}</p>
-            ${v.detalles ? `<p><strong>Detalles:</strong> ${v.detalles}</p>` : ''}
-          </div>
-          <div class="card-actions">
-            <a href="tel:${v.contacto.replace(/\D/g,'')}" class="btn btn-secondary btn-sm">📞 Llamar</a>
-            <a href="https://wa.me/57${v.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>
-            <button class="btn btn-outline btn-sm" onclick="toggleEstadoVivienda('${v.id}', '${v.estado}')">🔄 Cambiar Estado</button>
-            <button class="btn btn-outline btn-sm" onclick="reportar('vivienda', '${v.id}')">🚩 Reportar</button>
-          </div>
-        </div>
-      `;
-      }).join('');
+      const viviendas = await res.json();
+      if (!Array.isArray(viviendas)) {
+        listViviendasEl.innerHTML = `<p class="empty-msg">Error en formato de datos de viviendas.</p>`;
+      } else {
+        const filtered = (ciudadSel === 'TODAS') ? viviendas : viviendas.filter(v => v.ciudad.toLowerCase() === ciudadSel.toLowerCase());
+
+        if (!filtered.length) {
+          listViviendasEl.innerHTML = `<p class="empty-msg">No hay viviendas registradas en esta ciudad.</p>`;
+        } else {
+          listViviendasEl.innerHTML = filtered.map(v => {
+            const placeholder = getPlaceholderImg(v.tipo);
+            const imgSrc = v.foto_id ? `/api/viviendas/${v.id}/foto` : placeholder;
+            return `
+            <div class="card">
+              <img src="${imgSrc}" class="card-img" alt="Foto de ${v.tipo}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${placeholder}';">
+              <div class="card-header">
+                <h4 class="card-title">🏠 ${v.tipo} en ${v.barrio} (${v.ciudad})</h4>
+                <span class="badge ${v.estado === 'Busca ocupante' ? 'badge-ok' : 'badge-warning'}">${v.estado}</span>
+              </div>
+              <div class="card-body">
+                <p><strong>Capacidad:</strong> ${v.capacidad}</p>
+                <p><strong>Encargado:</strong> ${v.nombre_encargado}</p>
+                <p><strong>Contacto:</strong> ${v.contacto}</p>
+                ${v.detalles ? `<p><strong>Detalles:</strong> ${v.detalles}</p>` : ''}
+              </div>
+              <div class="card-actions">
+                <a href="tel:${v.contacto.replace(/\D/g,'')}" class="btn btn-secondary btn-sm">📞 Llamar</a>
+                <a href="https://wa.me/57${v.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>
+                <button class="btn btn-outline btn-sm" onclick="toggleEstadoVivienda('${v.id}', '${v.estado}')">🔄 Cambiar Estado</button>
+                <button class="btn btn-outline btn-sm" onclick="reportar('vivienda', '${v.id}')">🚩 Reportar</button>
+              </div>
+            </div>
+          `;
+          }).join('');
+        }
+      }
     }
-  } catch (e) {}
+  } catch (e) {
+    document.getElementById('list-viviendas').innerHTML = `<p class="empty-msg">Error de conexión al cargar viviendas.</p>`;
+  }
 }
 
 // Pestaña 3: Necesidades
 async function renderNecesidades() {
   const ciudadSel = document.getElementById('filter-ciudad-necesidades').value;
+  const container = document.getElementById('list-necesidades-vivienda');
   try {
     const res = await fetch('/api/necesidades-vivienda');
+    if (!res.ok) {
+      const msg = res.status === 429 ? 'Demasiadas peticiones. Intenta de nuevo en unos minutos.' : 'Error al cargar solicitudes de vivienda.';
+      container.innerHTML = `<p class="empty-msg">${msg}</p>`;
+      return;
+    }
     const necesidades = await res.json();
-    const container = document.getElementById('list-necesidades-vivienda');
+    if (!Array.isArray(necesidades)) {
+      container.innerHTML = `<p class="empty-msg">Error en formato de datos de solicitudes.</p>`;
+      return;
+    }
 
     const filtered = (ciudadSel === 'TODAS') ? necesidades : necesidades.filter(n => n.ciudad.toLowerCase() === ciudadSel.toLowerCase());
 
@@ -595,47 +626,68 @@ async function renderNecesidades() {
         </div>
       `).join('');
     }
-  } catch (e) {}
+  } catch (e) {
+    container.innerHTML = `<p class="empty-msg">Error de conexión al cargar solicitudes.</p>`;
+  }
 }
 
 // Pestaña 4: Mascotas
 async function renderMascotas() {
+  const refugiosEl = document.getElementById('list-refugios-mascota');
+  const necEl = document.getElementById('list-necesidades-mascota');
+
   try {
     const resR = await fetch('/api/refugios-mascota');
-    const refugios = await resR.json();
-    document.getElementById('list-refugios-mascota').innerHTML = !refugios.length ? `<p class="empty-msg">No hay refugios registrados.</p>` : refugios.map(r => `
-      <div class="card">
-        <div class="card-header"><h4 class="card-title">🐶 Refugio en ${r.sector} (${r.ciudad})</h4></div>
-        <div class="card-body">
-          <p><strong>Acepta:</strong> ${r.tipo_mascota}</p>
-          <p><strong>Dirección:</strong> ${r.direccion}</p>
-          <p><strong>Contacto:</strong> ${r.contacto}</p>
+    if (!resR.ok) {
+      const msg = resR.status === 429 ? 'Demasiadas peticiones. Intenta más tarde.' : 'Error al cargar refugios.';
+      refugiosEl.innerHTML = `<p class="empty-msg">${msg}</p>`;
+    } else {
+      const refugios = await resR.json();
+      refugiosEl.innerHTML = (!Array.isArray(refugios) || !refugios.length) ? `<p class="empty-msg">No hay refugios registrados.</p>` : refugios.map(r => `
+        <div class="card">
+          <div class="card-header"><h4 class="card-title">🐶 Refugio en ${r.sector} (${r.ciudad})</h4></div>
+          <div class="card-body">
+            <p><strong>Acepta:</strong> ${r.tipo_mascota}</p>
+            <p><strong>Dirección:</strong> ${r.direccion}</p>
+            <p><strong>Contacto:</strong> ${r.contacto}</p>
+          </div>
+          <div class="card-actions">
+            <a href="tel:${r.contacto.replace(/\D/g,'')}" class="btn btn-secondary btn-sm">📞 Llamar</a>
+            <a href="https://wa.me/57${r.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>
+            <button class="btn btn-outline btn-sm" onclick="reportar('refugio_mascota', '${r.id}')">🚩 Reportar</button>
+          </div>
         </div>
-        <div class="card-actions">
-          <a href="tel:${r.contacto.replace(/\D/g,'')}" class="btn btn-secondary btn-sm">📞 Llamar</a>
-          <a href="https://wa.me/57${r.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>
-          <button class="btn btn-outline btn-sm" onclick="reportar('refugio_mascota', '${r.id}')">🚩 Reportar</button>
-        </div>
-      </div>
-    `).join('');
+      `).join('');
+    }
+  } catch (e) {
+    refugiosEl.innerHTML = `<p class="empty-msg">Error de conexión al cargar refugios.</p>`;
+  }
 
+  try {
     const resN = await fetch('/api/necesidades-mascota');
-    const necM = await resN.json();
-    document.getElementById('list-necesidades-mascota').innerHTML = !necM.length ? `<p class="empty-msg">No hay mascotas registradas buscando refugio.</p>` : necM.map(m => `
-      <div class="card">
-        <div class="card-header"><h4 class="card-title">🐱 ${m.nombre_encargado}</h4></div>
-        <div class="card-body">
-          <p><strong>Mascota:</strong> ${m.tipo_mascota} (${m.cantidad_mascotas})</p>
-          <p><strong>Contacto:</strong> ${m.contacto}</p>
+    if (!resN.ok) {
+      const msg = resN.status === 429 ? 'Demasiadas peticiones. Intenta más tarde.' : 'Error al cargar solicitudes de mascotas.';
+      necEl.innerHTML = `<p class="empty-msg">${msg}</p>`;
+    } else {
+      const necM = await resN.json();
+      necEl.innerHTML = (!Array.isArray(necM) || !necM.length) ? `<p class="empty-msg">No hay mascotas registradas buscando refugio.</p>` : necM.map(m => `
+        <div class="card">
+          <div class="card-header"><h4 class="card-title">🐱 ${m.nombre_encargado}</h4></div>
+          <div class="card-body">
+            <p><strong>Mascota:</strong> ${m.tipo_mascota} (${m.cantidad_mascotas})</p>
+            <p><strong>Contacto:</strong> ${m.contacto}</p>
+          </div>
+          <div class="card-actions">
+            <a href="tel:${m.contacto.replace(/\D/g,'')}" class="btn btn-secondary btn-sm">📞 Llamar</a>
+            <a href="https://wa.me/57${m.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>
+            <button class="btn btn-outline btn-sm" onclick="reportar('necesidad_mascota', '${m.id}')">🚩 Reportar</button>
+          </div>
         </div>
-        <div class="card-actions">
-          <a href="tel:${m.contacto.replace(/\D/g,'')}" class="btn btn-secondary btn-sm">📞 Llamar</a>
-          <a href="https://wa.me/57${m.contacto.replace(/\D/g,'')}" target="_blank" class="btn btn-primary btn-sm">💬 WhatsApp</a>
-          <button class="btn btn-outline btn-sm" onclick="reportar('necesidad_mascota', '${m.id}')">🚩 Reportar</button>
-        </div>
-      </div>
-    `).join('');
-  } catch (e) {}
+      `).join('');
+    }
+  } catch (e) {
+    necEl.innerHTML = `<p class="empty-msg">Error de conexión al cargar solicitudes de mascotas.</p>`;
+  }
 }
 
 // Acciones de Cambio de Estado
@@ -698,6 +750,9 @@ function openAdminModal() {
     document.getElementById('admin-login-sec').style.display = 'none';
     document.getElementById('admin-dashboard-sec').style.display = 'block';
     fetchAdminData();
+  } else {
+    document.getElementById('admin-login-sec').style.display = 'block';
+    document.getElementById('admin-dashboard-sec').style.display = 'none';
   }
 }
 
@@ -707,6 +762,10 @@ function closeAdminModal() {
 
 async function loginAdmin() {
   const pass = document.getElementById('admin-pass-input').value;
+  if (!pass) {
+    showToast('Por favor ingresa la clave de administración.', 'error');
+    return;
+  }
   try {
     const res = await fetch('/api/admin/login', {
       method: 'POST',
@@ -720,25 +779,49 @@ async function loginAdmin() {
       document.getElementById('admin-login-sec').style.display = 'none';
       document.getElementById('admin-dashboard-sec').style.display = 'block';
       fetchAdminData();
+    } else if (res.status === 429) {
+      showToast('Demasiados intentos de acceso. Espera 15 minutos e intenta de nuevo.', 'error');
     } else {
       showToast('Clave de administración incorrecta', 'error');
     }
-  } catch (e) {}
+  } catch (e) {
+    showToast('Sin conexión. Verifica tu internet e intenta de nuevo.', 'error');
+  }
 }
 
 async function fetchAdminData() {
+  const contentEl = document.getElementById('admin-content-list');
   try {
     const res = await fetch('/api/admin/registros', {
       headers: { 'x-admin-key': adminKey }
     });
-    if (!res.ok) return;
+
+    if (res.status === 401 || res.status === 403) {
+      adminKey = '';
+      localStorage.removeItem('admin_key');
+      document.getElementById('admin-login-sec').style.display = 'block';
+      document.getElementById('admin-dashboard-sec').style.display = 'none';
+      showToast('Sesión expirada o clave de administración inválida.', 'error');
+      return;
+    }
+
+    if (!res.ok) {
+      let errorMsg = 'Error al cargar los registros de administración.';
+      if (res.status === 429) {
+        errorMsg = 'Demasiadas peticiones al servidor (429). Por favor espera un momento y pulsa "Recargar Todo".';
+      }
+      showToast(errorMsg, 'error');
+      contentEl.innerHTML = `<p class="empty-msg" style="color: var(--danger-color, #ef4444);">⚠️ ${errorMsg}</p>`;
+      return;
+    }
+
     const data = await res.json();
 
     let html = `
       <h3>🏠 Viviendas</h3>
       <table class="admin-table">
         <tr><th>Tipo</th><th>Ciudad</th><th>Contacto</th><th>Estado</th><th>Sospechoso</th><th>Acción</th></tr>
-        ${data.viviendas.map(v => `
+        ${(data.viviendas || []).map(v => `
           <tr>
             <td>${v.tipo}</td>
             <td>${v.ciudad}</td>
@@ -756,7 +839,7 @@ async function fetchAdminData() {
       <h3>🆘 Necesidades Vivienda</h3>
       <table class="admin-table">
         <tr><th>Familia</th><th>Ciudad</th><th>Contacto</th><th>Estado</th><th>Sospechoso</th><th>Acción</th></tr>
-        ${data.necesidades.map(n => `
+        ${(data.necesidades || []).map(n => `
           <tr>
             <td>${n.nombre_familia}</td>
             <td>${n.ciudad}</td>
@@ -772,8 +855,11 @@ async function fetchAdminData() {
       </table>
     `;
 
-    document.getElementById('admin-content-list').innerHTML = html;
-  } catch (e) {}
+    contentEl.innerHTML = html;
+  } catch (e) {
+    showToast('Error de red al consultar el servidor.', 'error');
+    contentEl.innerHTML = `<p class="empty-msg">⚠️ Error de conexión al cargar datos de administración.</p>`;
+  }
 }
 
 async function adminEliminar(tipo, id) {
@@ -786,8 +872,12 @@ async function adminEliminar(tipo, id) {
     if (res.ok) {
       showToast('Registro eliminado');
       fetchAdminData();
+    } else {
+      showToast('Error al eliminar registro.', 'error');
     }
-  } catch (e) {}
+  } catch (e) {
+    showToast('Error de red al intentar eliminar.', 'error');
+  }
 }
 
 async function adminAprobar(tipo, id) {
@@ -799,6 +889,10 @@ async function adminAprobar(tipo, id) {
     if (res.ok) {
       showToast('Registro verificado y aprobado');
       fetchAdminData();
+    } else {
+      showToast('Error al aprobar registro.', 'error');
     }
-  } catch (e) {}
+  } catch (e) {
+    showToast('Error de red al intentar aprobar.', 'error');
+  }
 }

@@ -9,6 +9,7 @@ const path = require('path');
 const { initDB, query } = require('./db');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
@@ -63,12 +64,21 @@ const upload = multer({
   limits: { fileSize: 15 * 1024 * 1024 }, // Máximo 15MB
 });
 
-// Middleware de Limite de Tasa General (Anti-Spam)
+// BUG-006: Rate limiters diferenciados para evitar 429 en navegación normal o imágenes
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 15,
+  message: { error: 'Demasiados intentos de inicio de sesión. Por favor espera 15 minutos.' },
+});
+
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 300,
-  message: { error: 'Demasiadas peticiones desde esta dirección IP.' },
+  max: 1000,
+  message: { error: 'Demasiadas peticiones desde esta dirección IP. Intenta más tarde.' },
+  skip: (req) => req.path.includes('/foto'),
 });
+
+app.use('/api/admin/login', authLimiter);
 app.use('/api/', generalLimiter);
 
 // Detección de anomalías en ráfagas (Subidas masivas)
