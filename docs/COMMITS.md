@@ -19,9 +19,10 @@
 
 ## 🌿 RAMA: `main` (Producción — solo merges desde dev)
 
-| *(pendiente)* | 2026-08-12 | Agente IA | `merge(main): integrar desde dev el fix BUG-007` | ✅ ok |
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| *(pendiente)* | 2026-08-12 | Emmanuel P. / Agente IA | `feat(mascota,admin): foto en refugios de mascotas y trazabilidad de IP por publicacion` | ⚠️ revisión |
+| *(pendiente)* | 2026-08-12 | Agente IA | `merge(main): integrar desde dev el fix BUG-007` | ✅ ok |
 | `48df43f` | 2026-08-12 | Agente IA | `merge(main): integrar desde dev el MVP v1.0.0 completo preparado para despliegue` | ✅ ok |
 | `2239fd8` | 2026-08-11 | Juan Esteban B. | `docs: create architecture documentation including PRD, project brief, data model, and footer information` | ✅ ok |
 

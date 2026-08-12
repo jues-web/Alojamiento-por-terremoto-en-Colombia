@@ -404,6 +404,11 @@ function getFormRefugioMascotaHTML() {
         <label>Contacto <span class="req">*</span></label>
         <input type="tel" name="contacto" class="form-control" placeholder="Ej: 3001234567" maxlength="10" required>
       </div>
+      <div class="form-group">
+        <label>Foto del refugio (opcional)</label>
+        <input type="file" name="foto" accept="image/*" class="form-control">
+        <small style="color:var(--text-soft)">Formatos: JPG, PNG, WebP, GIF, TIFF. Máx 15MB. Mínimo 500px por lado.</small>
+      </div>
       <button type="submit" class="btn btn-secondary" style="width:100%">Ofrecer Refugio</button>
     </form>
   `;
@@ -412,12 +417,12 @@ function getFormRefugioMascotaHTML() {
 async function submitRefugioMascota(e) {
   e.preventDefault();
   const form = e.target;
-  const dataObj = Object.fromEntries(new FormData(form));
-  dataObj.owner_token = ownerToken;
+  // Multipart, como en viviendas: el formulario puede llevar una foto adjunta.
+  // Sin cabecera Content-Type, para que el navegador fije el boundary del multipart.
+  const formData = new FormData(form);
+  formData.append('owner_token', ownerToken);
 
-  const data = await enviarFormulario(form, '/api/refugios-mascota', JSON.stringify(dataObj), {
-    headers: { 'Content-Type': 'application/json' }
-  });
+  const data = await enviarFormulario(form, '/api/refugios-mascota', formData);
   if (!data) return;
 
   showToast('Refugio registrado.');
@@ -648,6 +653,7 @@ async function renderMascotas() {
       const refugios = await resR.json();
       refugiosEl.innerHTML = (!Array.isArray(refugios) || !refugios.length) ? `<p class="empty-msg">No hay refugios registrados.</p>` : refugios.map(r => `
         <div class="card">
+          ${r.foto_id ? `<img src="/api/refugios-mascota/${r.id}/foto" class="card-img" alt="Foto del refugio" loading="lazy" decoding="async">` : ''}
           <div class="card-header"><h4 class="card-title">🐶 Refugio en ${r.sector} (${r.ciudad})</h4></div>
           <div class="card-body">
             <p><strong>Acepta:</strong> ${r.tipo_mascota}</p>
@@ -920,7 +926,11 @@ async function fetchAdminData() {
         <tr><th>IP</th><th>Publicaciones</th><th>Estado</th><th>Admin Override</th><th>Último uso</th><th>Acciones</th></tr>
         ${(data.ips || []).map(ip => `
           <tr style="${ip.limite_alcanzado && !ip.is_allowed_by_admin && !ip.is_blocked ? 'background:rgba(251,146,60,0.08);' : ''}">
-            <td>${ip.ip}</td>
+            <td>
+              <button class="btn btn-outline btn-sm" style="font-family:monospace;padding:4px 8px;min-height:auto;"
+                      title="Ver qué publicó esta IP"
+                      onclick="verPublicacionesIP('${ip.ip}')">🔍 ${ip.ip}</button>
+            </td>
             <td>
               ${ip.post_count}
               ${ip.limite_alcanzado && !ip.is_allowed_by_admin ? ' <span style="background:#fb923c;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.7rem;font-weight:700;">⚠️ Límite</span>' : ''}
@@ -976,6 +986,52 @@ async function adminAprobar(tipo, id) {
     }
   } catch (e) {
     showToast('Error de red al intentar aprobar.', 'error');
+  }
+}
+
+// Muestra en un modal qué publicó una IP concreta, para poder juzgarla antes de bloquear.
+async function verPublicacionesIP(ip) {
+  const modal = document.getElementById('modal-form');
+  const content = document.getElementById('modal-form-content');
+  content.innerHTML = `<h2>🔍 Publicaciones de ${ip}</h2><p class="empty-msg">Cargando...</p>`;
+  modal.classList.add('active');
+
+  try {
+    const res = await fetch(`/api/admin/ips/${encodeURIComponent(ip)}/publicaciones`, {
+      headers: { 'x-admin-key': adminKey }
+    });
+    if (!res.ok) {
+      content.innerHTML = `<h2>🔍 Publicaciones de ${ip}</h2>
+        <p class="empty-msg">No se pudieron cargar las publicaciones (HTTP ${res.status}).</p>`;
+      return;
+    }
+    const data = await res.json();
+    const pubs = data.publicaciones || [];
+
+    content.innerHTML = `
+      <h2>🔍 Publicaciones de <span style="font-family:monospace">${ip}</span></h2>
+      ${!pubs.length
+        ? `<p class="empty-msg">Esta IP no tiene publicaciones registradas.<br>
+             <small>Las publicaciones creadas antes de que se empezara a guardar la IP no aparecen aquí.</small></p>`
+        : `<p style="color:var(--text-soft)">${data.total} publicacion${data.total === 1 ? '' : 'es'} desde esta IP:</p>
+           <table class="admin-table">
+             <tr><th>Tipo</th><th>Publicación</th><th>Ciudad</th><th>Contacto</th><th>Reportes</th><th>Estado</th></tr>
+             ${pubs.map(p => `
+               <tr style="${p.sospechoso ? 'background:rgba(239,68,68,0.08);' : ''}">
+                 <td>${p.entidad_label}</td>
+                 <td>${p.descripcion}</td>
+                 <td>${p.ciudad || '—'}</td>
+                 <td>${p.contacto}</td>
+                 <td>${p.reportes_count > 0 ? `🚩 ${p.reportes_count}` : '0'}</td>
+                 <td>${p.sospechoso ? '🚨 En cuarentena' : 'Visible'}</td>
+               </tr>
+             `).join('')}
+           </table>`}
+      <button class="btn btn-secondary" style="width:100%;margin-top:16px" onclick="closeFormModal()">Cerrar</button>
+    `;
+  } catch (e) {
+    content.innerHTML = `<h2>🔍 Publicaciones de ${ip}</h2>
+      <p class="empty-msg">Error de red al consultar el servidor.</p>`;
   }
 }
 

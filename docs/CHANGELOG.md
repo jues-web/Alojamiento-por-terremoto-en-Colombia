@@ -17,6 +17,19 @@
 - **Panel de Administración**: Se incorporaron las tablas de Centros de Acopio, Refugios de Mascotas y Necesidades de Mascotas al panel de moderación, ya que anteriormente sólo se visualizaban Viviendas y Necesidades de Vivienda.
 - **Panel de Administración**: Nueva sección de **Control de IPs**, donde el administrador puede visualizar las IPs que han interactuado con la plataforma, desbloquearlas manualmente ("Permitir publicar") o bloquearlas definitivamente.
 - **Notificación de límite de publicaciones**: El panel admin ahora muestra un banner de alerta naranja cuando una IP alcanza exactamente 10 publicaciones, indicando al administrador que debe revisar y decidir si permitir o bloquear esa IP.
+- **Foto en Refugios de Mascotas**: el formulario "Registrar Refugio de Animales" acepta ahora
+  una foto opcional, con el mismo tratamiento que las viviendas (Sharp → WebP 82/100, sin
+  metadatos EXIF GPS, mínimo 500px, máximo 15MB). Se sirve como WebP binario desde
+  `GET /api/refugios-mascota/:id/foto`, con caché inmutable y carga diferida, siguiendo el
+  ADR-008. La tabla `foto` se reutiliza: `vivienda_id` pasa a admitir `NULL` porque una foto
+  puede pertenecer ahora a un refugio, vinculada por `refugio_mascota.foto_id`.
+- **Trazabilidad de IP por publicación**: nueva columna `ip` en las cinco tablas de
+  publicaciones, más el endpoint `GET /api/admin/ips/:ip/publicaciones`. En el panel admin la
+  IP es ahora un botón: al pulsarlo se abre un modal con lo que esa IP publicó (tipo,
+  descripción, ciudad, contacto, reportes y si está en cuarentena), para poder juzgarla antes
+  de bloquearla. Hasta ahora `ip_registry` sólo contaba publicaciones por IP, sin vínculo con
+  los registros concretos. **Las publicaciones anteriores a este cambio tienen `ip` a NULL** y
+  no aparecen: ese dato no se puede reconstruir.
 
 ### Corregido
 - **BUG-008**: `getPlaceholderImg()` estaba declarada dentro del bloque `try/catch` de centros-acopio en `renderAlojamientos()`, desbalanceando las llaves de la función y provocando que el segundo `try` de viviendas quedara sin `catch`. Función movida a scope global; los dos bloques `try/catch` son ahora independientes y correctamente balanceados.

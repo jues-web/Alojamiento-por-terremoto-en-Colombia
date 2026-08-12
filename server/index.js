@@ -277,9 +277,9 @@ app.post('/api/viviendas', upload.single('foto'), async (req, res) => {
     }
 
     await query(
-      `INSERT INTO vivienda (id, tipo, ciudad, barrio, capacidad, detalles, nombre_encargado, contacto, foto_id, estado, owner_token, sospechoso)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Busca ocupante', $10, $11)`,
-      [viviendaId, tipo, ciudad, barrio, capacidad, detalles || '', nombre_encargado, contacto, fotoId, owner_token || uuidv4(), isAnomaly]
+      `INSERT INTO vivienda (id, tipo, ciudad, barrio, capacidad, detalles, nombre_encargado, contacto, foto_id, estado, owner_token, sospechoso, ip)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Busca ocupante', $10, $11, $12)`,
+      [viviendaId, tipo, ciudad, barrio, capacidad, detalles || '', nombre_encargado, contacto, fotoId, owner_token || uuidv4(), isAnomaly, clientIp]
     );
 
     res.status(201).json({ success: true, id: viviendaId, sospechoso: isAnomaly });
@@ -357,9 +357,9 @@ app.post('/api/necesidades-vivienda', async (req, res) => {
     const condEspecialBool = condicion_especial === true || condicion_especial === 'true';
 
     await query(
-      `INSERT INTO necesidad_vivienda (id, nombre_familia, contacto, ciudad, cantidad_personas, condicion_especial, descripcion_condicion, descripcion_vivienda_necesita, estado, owner_token, sospechoso)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Buscando alojamiento', $9, $10)`,
-      [id, nombre_familia, contacto, ciudad, cantidad_personas, condEspecialBool, descripcion_condicion || '', descripcion_vivienda_necesita, owner_token || uuidv4(), isAnomaly]
+      `INSERT INTO necesidad_vivienda (id, nombre_familia, contacto, ciudad, cantidad_personas, condicion_especial, descripcion_condicion, descripcion_vivienda_necesita, estado, owner_token, sospechoso, ip)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Buscando alojamiento', $9, $10, $11)`,
+      [id, nombre_familia, contacto, ciudad, cantidad_personas, condEspecialBool, descripcion_condicion || '', descripcion_vivienda_necesita, owner_token || uuidv4(), isAnomaly, clientIp]
     );
 
     res.status(201).json({ success: true, id, sospechoso: isAnomaly });
@@ -423,8 +423,8 @@ app.post('/api/centros-acopio', async (req, res) => {
     const isAnomaly = await checkAndRegisterIP(clientIp, isAdminUser);
     const id = uuidv4();
     await query(
-      `INSERT INTO centro_acopio (id, ciudad, sector, direccion, contacto, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [id, ciudad, sector, direccion, contacto, owner_token || uuidv4(), isAnomaly]
+      `INSERT INTO centro_acopio (id, ciudad, sector, direccion, contacto, owner_token, sospechoso, ip) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [id, ciudad, sector, direccion, contacto, owner_token || uuidv4(), isAnomaly, clientIp]
     );
     res.status(201).json({ success: true, id });
   } catch (err) {
@@ -442,7 +442,7 @@ app.get('/api/refugios-mascota', async (req, res) => {
   }
 });
 
-app.post('/api/refugios-mascota', async (req, res) => {
+app.post('/api/refugios-mascota', upload.single('foto'), async (req, res) => {
   try {
     const { tipo_mascota, ciudad, sector, direccion, contacto, owner_token, honeypot } = req.body;
     if (honeypot) return res.status(200).json({ success: true });
@@ -458,13 +458,54 @@ app.post('/api/refugios-mascota', async (req, res) => {
     const isAdminUser = req.headers['x-admin-key'] === ADMIN_PASSWORD;
     const isAnomaly = await checkAndRegisterIP(clientIp, isAdminUser);
     const id = uuidv4();
+
+    // Foto opcional, con el mismo tratamiento que las viviendas (WebP 82, sin EXIF GPS).
+    // En la tabla `foto` el campo vivienda_id queda NULL: esta imagen es de un refugio.
+    let fotoId = null;
+    if (req.file) {
+      const base64Webp = await processImageBuffer(req.file.buffer);
+      fotoId = uuidv4();
+      await query(
+        `INSERT INTO foto (id, vivienda_id, imagen_base64) VALUES ($1, NULL, $2)`,
+        [fotoId, base64Webp]
+      );
+    }
+
     await query(
-      `INSERT INTO refugio_mascota (id, tipo_mascota, ciudad, sector, direccion, contacto, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-      [id, tipo_mascota, ciudad, sector, direccion, contacto, owner_token || uuidv4(), isAnomaly]
+      `INSERT INTO refugio_mascota (id, tipo_mascota, ciudad, sector, direccion, contacto, owner_token, sospechoso, ip, foto_id) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+      [id, tipo_mascota, ciudad, sector, direccion, contacto, owner_token || uuidv4(), isAnomaly, clientIp, fotoId]
     );
     res.status(201).json({ success: true, id });
   } catch (err) {
     res.status(400).json({ error: err.message });
+  }
+});
+
+// Sirve la foto de un refugio como WebP binario, igual que la de las viviendas.
+app.get('/api/refugios-mascota/:id/foto', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rows = await query(
+      `SELECT f.imagen_base64
+       FROM refugio_mascota r
+       JOIN foto f ON r.foto_id = f.id
+       WHERE r.id = $1 AND r.sospechoso = false`,
+      [id]
+    );
+
+    if (!rows.length || !rows[0].imagen_base64) {
+      return res.status(404).json({ error: 'Foto no encontrada.' });
+    }
+
+    const base64 = String(rows[0].imagen_base64).replace(/^data:image\/[\w+.-]+;base64,/, '');
+    const buffer = Buffer.from(base64, 'base64');
+
+    res.set('Content-Type', 'image/webp');
+    res.set('Cache-Control', 'public, max-age=31536000, immutable');
+    res.set('Content-Length', buffer.length);
+    res.send(buffer);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -495,8 +536,8 @@ app.post('/api/necesidades-mascota', async (req, res) => {
     const isAnomaly = await checkAndRegisterIP(clientIp, isAdminUser);
     const id = uuidv4();
     await query(
-      `INSERT INTO necesidad_mascota (id, nombre_encargado, contacto, tipo_mascota, cantidad_mascotas, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-      [id, nombre_encargado, contacto, tipo_mascota, cantidad_mascotas, owner_token || uuidv4(), isAnomaly]
+      `INSERT INTO necesidad_mascota (id, nombre_encargado, contacto, tipo_mascota, cantidad_mascotas, owner_token, sospechoso, ip) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [id, nombre_encargado, contacto, tipo_mascota, cantidad_mascotas, owner_token || uuidv4(), isAnomaly, clientIp]
     );
     res.status(201).json({ success: true, id });
   } catch (err) {
@@ -618,6 +659,48 @@ app.patch('/api/admin/ips/:ip/bloquear', requireAdmin, async (req, res) => {
     const { ip } = req.params;
     await query(`UPDATE ip_registry SET is_blocked = true, is_allowed_by_admin = false WHERE ip = $1`, [ip]);
     res.json({ success: true, message: 'IP bloqueada exitosamente.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Qué publicó una IP concreta, en las cinco entidades. Permite al admin ver el contenido
+// real antes de decidir si bloquea: una IP con 10 publicaciones puede ser un bot o el
+// coordinador de un albergue registrando familias.
+// Las publicaciones anteriores a la columna `ip` tienen NULL y no aparecen aquí.
+app.get('/api/admin/ips/:ip/publicaciones', requireAdmin, async (req, res) => {
+  try {
+    const { ip } = req.params;
+    const filas = await query(`
+      SELECT 'vivienda' AS entidad_tipo, 'Vivienda' AS entidad_label, id,
+             tipo || ' en ' || barrio AS descripcion, ciudad, contacto,
+             reportes_count, sospechoso, fecha_registro
+        FROM vivienda WHERE ip = $1
+      UNION ALL
+      SELECT 'necesidad_vivienda', 'Necesidad de vivienda', id,
+             'Familia ' || nombre_familia, ciudad, contacto,
+             reportes_count, sospechoso, fecha_registro
+        FROM necesidad_vivienda WHERE ip = $1
+      UNION ALL
+      SELECT 'centro_acopio', 'Centro de acopio', id,
+             sector || ' — ' || direccion, ciudad, contacto,
+             reportes_count, sospechoso, fecha_registro
+        FROM centro_acopio WHERE ip = $1
+      UNION ALL
+      SELECT 'refugio_mascota', 'Refugio de mascotas', id,
+             'Acepta ' || tipo_mascota || ' — ' || sector, ciudad, contacto,
+             reportes_count, sospechoso, fecha_registro
+        FROM refugio_mascota WHERE ip = $1
+      UNION ALL
+      SELECT 'necesidad_mascota', 'Necesidad de refugio', id,
+             nombre_encargado || ' — ' || tipo_mascota || ' (' || cantidad_mascotas || ')',
+             ''::varchar(100), contacto,
+             reportes_count, sospechoso, fecha_registro
+        FROM necesidad_mascota WHERE ip = $1
+      ORDER BY fecha_registro DESC
+    `, [ip]);
+
+    res.json({ ip, total: filas.length, publicaciones: filas });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

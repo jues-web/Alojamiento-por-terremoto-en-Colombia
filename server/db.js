@@ -134,6 +134,29 @@ async function createTables() {
     // ALTER TABLE ... IF NOT EXISTS solo está disponible en PostgreSQL 9.6+.
     `ALTER TABLE ip_registry ADD COLUMN IF NOT EXISTS limite_alcanzado BOOLEAN DEFAULT FALSE;`,
 
+    // Guarda la IP que creó cada publicación, para que el panel admin pueda mostrar qué
+    // publicó una IP sospechosa antes de decidir si bloquearla. Hasta ahora `ip_registry`
+    // sólo contaba publicaciones por IP, sin ningún vínculo con los registros concretos.
+    // Los registros creados antes de esta columna quedan con `ip` a NULL: no es posible
+    // reconstruir ese dato retroactivamente.
+    `ALTER TABLE vivienda           ADD COLUMN IF NOT EXISTS ip VARCHAR(45);`,
+    `ALTER TABLE necesidad_vivienda ADD COLUMN IF NOT EXISTS ip VARCHAR(45);`,
+    `ALTER TABLE centro_acopio      ADD COLUMN IF NOT EXISTS ip VARCHAR(45);`,
+    `ALTER TABLE refugio_mascota    ADD COLUMN IF NOT EXISTS ip VARCHAR(45);`,
+    `ALTER TABLE necesidad_mascota  ADD COLUMN IF NOT EXISTS ip VARCHAR(45);`,
+
+    // Los refugios de mascotas también pueden tener foto, igual que las viviendas. La tabla
+    // `foto` se reutiliza: `vivienda_id` pasa a ser opcional porque una foto ahora puede
+    // pertenecer a un refugio en su lugar. El vínculo se hace por `refugio_mascota.foto_id`.
+    `ALTER TABLE refugio_mascota ADD COLUMN IF NOT EXISTS foto_id UUID;`,
+    `ALTER TABLE foto ALTER COLUMN vivienda_id DROP NOT NULL;`,
+
+    `CREATE INDEX IF NOT EXISTS idx_vivienda_ip ON vivienda(ip);`,
+    `CREATE INDEX IF NOT EXISTS idx_necesidad_vivienda_ip ON necesidad_vivienda(ip);`,
+    `CREATE INDEX IF NOT EXISTS idx_centro_acopio_ip ON centro_acopio(ip);`,
+    `CREATE INDEX IF NOT EXISTS idx_refugio_mascota_ip ON refugio_mascota(ip);`,
+    `CREATE INDEX IF NOT EXISTS idx_necesidad_mascota_ip ON necesidad_mascota(ip);`,
+
     `CREATE INDEX IF NOT EXISTS idx_vivienda_ciudad ON vivienda(ciudad);`,
     `CREATE INDEX IF NOT EXISTS idx_vivienda_estado ON vivienda(estado);`,
     `CREATE INDEX IF NOT EXISTS idx_necesidad_ciudad ON necesidad_vivienda(ciudad);`
