@@ -29,6 +29,7 @@
 
 ## 🌿 RAMA: `dev` (Integración — solo merges desde ramas personales)
 
+| *(pendiente)* | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el fix BUG-007 y docs` | ✅ ok |
 | Hash | Fecha | Autor | Mensaje | Estado |
 | `a9a60e6` | 2026-08-12 | Agente IA | `fix(ui,db): vincular e ilustrar correctamente imagenes de viviendas y habitaciones (BUG-006)` | ✅ ok |
 | `7cc4a16` | 2026-08-12 | Agente IA | `docs: registrar ADR-009 sobre PostgreSQL como unico motor` | ✅ ok |
