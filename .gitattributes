@@ -1,0 +1,6 @@
+# El repositorio vive en OneDrive/Windows y los editores tienden a guardar en CRLF.
+# Los scripts de shell DEBEN usar LF: con CRLF el shebang se lee como "/bin/sh\r",
+# Alpine no encuentra el intérprete y el contenedor no arranca.
+*.sh text eol=lf
+entrypoint.sh text eol=lf
+Dockerfile text eol=lf
