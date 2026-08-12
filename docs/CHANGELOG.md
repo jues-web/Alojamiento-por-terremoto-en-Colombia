@@ -34,9 +34,13 @@
 - `.env.example`: actualizado con todos los campos requeridos, incluyendo `POSTGRES_USER`,
   `POSTGRES_PASSWORD`, `POSTGRES_DB`, comentarios de guía para despliegue, el uso de
   `?sslmode=require` en proveedores gestionados y cómo generar una clave admin fuerte.
-- **PostgreSQL es obligatorio en producción** (ADR-007). Con `NODE_ENV=production`, la app
-  ya no cae a SQLite: falla al arrancar con un mensaje explícito y `exit(1)`. En desarrollo
-  el fallback sigue igual.
+- ⚠️ **PostgreSQL es obligatorio siempre**, también en desarrollo (ADR-009). `DATABASE_URL`
+  pasa a ser requerida: sin ella la app no arranca y explica las dos vías de desarrollo
+  local (`docker compose up -d db`, o una rama de Neon con `?sslmode=require`).
+  Esto sustituye a la restricción que el ADR-007 aplicaba sólo a producción.
+- Las 27 consultas de `server/index.js` usan placeholders nativos de PostgreSQL
+  (`$1, $2…`) en lugar de los `?` heredados de SQLite. `query()` queda como una envoltura
+  fina sobre `pgPool.query()`, sin reescribir el SQL.
 - `toggleEstadoVivienda()` y `toggleEstadoNecesidad()` muestran el error del servidor y los
   fallos de red mediante `showToast`, en vez de fallar en silencio.
 - ⚠️ **Cambio incompatible**: `GET /api/viviendas` ya **no** devuelve el campo `imagen_base64`.
@@ -61,6 +65,10 @@
 
 ### Eliminado
 - Valor por defecto `admin123` de `ADMIN_PASSWORD` en `entrypoint.sh` y `docker-compose.yml`.
+- **Motor SQLite y su fallback automático** (ADR-009). Se eliminan `createSqliteTables()`,
+  la rama SQLite de `query()` y la dependencia `sqlite3` (122 paquetes menos). El esquema
+  deja de estar duplicado a mano y desaparece la traducción de placeholders `?` → `$1`,
+  cuyo `replace` global habría roto cualquier consulta con un `?` dentro de un literal.
 
 ### Seguridad
 - **CRÍTICO**: eliminadas credenciales de producción hardcodeadas en `docker-compose.yml`.

@@ -8,17 +8,24 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Comandos
 
+**PostgreSQL es obligatorio para arrancar** (ADR-009). Sin `DATABASE_URL` la app falla al iniciar; no hay fallback a SQLite. Antes de nada: `cp .env.example .env` y rellenar `ADMIN_PASSWORD` (`docker compose` la exige incluso para levantar sólo la base de datos).
+
 ```bash
 npm install                    # instalar dependencias (node_modules no está versionado)
-npm start                      # servidor en :3000 (SQLite si no hay DATABASE_URL)
-npm run dev                    # igual, con node --watch
 
-docker compose up --build -d   # stack completo: app + PostgreSQL 16 con healthcheck
+docker compose up -d db        # PostgreSQL 16 en localhost:5432 (lo mínimo para desarrollar)
+npm run dev                    # servidor en :3000 con node --watch
+npm start                      # igual, sin watch
+
+docker compose up --build -d   # stack completo: app + db en contenedores
 docker compose logs -f app
 docker compose down -v         # borra también el volumen postgres_data
 
 curl localhost:3000/api/health # healthcheck usado por Docker
 node --check server/index.js   # verificación de sintaxis rápida
+
+# inspeccionar la base de datos local
+docker compose exec db psql -U postgres -d alojamiento_db -c '\dt'
 ```
 
 **No hay tests todavía.** `package.json` no define script `test` ni tiene Jest/Supertest instalados. El stack de testing aprobado (Jest o Node Test Runner + Supertest) está declarado en `.agents/workflows/qa-build-workflow.md` pero aún no implementado. Al añadirlo, respetar ese stack: cualquier otra librería requiere un ADR.
@@ -31,14 +38,12 @@ node --check server/index.js   # verificación de sintaxis rápida
 
 Aplicación monolítica de 3 archivos reales: `server/index.js` (todas las rutas), `server/db.js` (acceso a datos) y `public/app.js` (todo el frontend). Express sirve `public/` como estático y expone `/api/*`.
 
-### `server/db.js` — capa dual PostgreSQL/SQLite
+### `server/db.js` — acceso a datos (PostgreSQL únicamente)
 
-Es la pieza que más condiciona cómo se escribe el resto del código:
-
-- `initDB()` intenta conectar a `DATABASE_URL`; si falla o no existe, cae a SQLite en `data.db` (raíz del repo). El fallback es silencioso, así que un error de credenciales de Postgres se manifiesta como "los datos no persisten" y no como un crash.
-- **Todo el SQL se escribe con `?` como placeholder.** `query()` traduce `?` → `$1, $2…` cuando corre en Postgres. Nunca escribir `$1` directamente: rompería SQLite.
-- `query()` devuelve un **array de filas** en SELECT. En escrituras devuelve `[]` en Postgres pero `{lastID, changes}` en SQLite — no depender del valor de retorno de INSERT/UPDATE/DELETE.
-- Los esquemas están **duplicados a mano** en `createPostgresTables()` y `createSqliteTables()`. Cualquier columna nueva debe agregarse en ambos, con el tipo equivalente (`UUID`/`TEXT`, `BOOLEAN`/`INTEGER`, `TIMESTAMP`/`DATETIME`). No hay sistema de migraciones: las tablas se crean con `CREATE TABLE IF NOT EXISTS` al arrancar, así que **añadir una columna a una BD ya existente no ocurre automáticamente**.
+- `initDB()` exige `DATABASE_URL` y falla al arrancar si falta o no conecta. **No hay fallback a SQLite** desde el ADR-009 (que reemplaza al ADR-001 y deja sin objeto al ADR-007).
+- **El SQL usa placeholders nativos `$1, $2…`.** Ya no existe traducción desde `?`: `query()` es una envoltura fina sobre `pgPool.query()`.
+- `query()` devuelve siempre un **array de filas**; `[]` en escrituras sin `RETURNING`. No depender del valor de retorno de INSERT/UPDATE/DELETE.
+- El esquema vive en un único sitio, `createTables()`. **No hay sistema de migraciones**: las tablas se crean con `CREATE TABLE IF NOT EXISTS` al arrancar, así que **añadir una columna aquí no la agrega a una base de datos que ya existe** — eso exige un `ALTER TABLE` manual contra la instancia (local o Neon).
 
 ### Modelo de datos
 
@@ -114,7 +119,7 @@ Scopes: `vivienda`, `mascota`, `admin`, `db`, `auth`, `image`, `api`, `ui`, `doc
 
 | | Desarrollo | Producción |
 |---|---|---|
-| Sin PostgreSQL disponible | fallback a SQLite + warning | **error fatal, `exit(1)`** (ADR-007) |
+| Sin `DATABASE_URL` o sin conexión | **error fatal, `exit(1)`** (ADR-009) | **error fatal, `exit(1)`** |
 | `ADMIN_PASSWORD` ausente | default `admin123` + warning | **error fatal, `exit(1)`** |
 | `ADMIN_PASSWORD` débil o <12 chars | permitido | **error fatal, `exit(1)`** |
 

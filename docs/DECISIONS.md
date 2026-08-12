@@ -306,3 +306,70 @@ Sólo cambia la entrega.
 - Deuda pendiente: guardar base64 en la base de datos sigue costando ~33 % de espacio extra
   y obliga a decodificar en cada petición no cacheada. Migrar la columna a `BYTEA`/`BLOB`
   sería el siguiente paso natural, y requeriría su propio ADR y una migración de datos.
+
+---
+
+## ADR-009 — PostgreSQL como único motor: se retira el fallback a SQLite
+
+- **Fecha**: 2026-08-12
+- **Estado**: ✅ Aceptado
+- **Autor(es)**: Emmanuel Peñuela Chica, Agente IA
+- **Rama**: `dev`
+- **Reemplaza a**: ADR-001 (que queda como registro histórico; el ADR-007 que lo refinaba
+  pierde su objeto, porque ya no existe fallback que restringir)
+
+### Contexto
+El ADR-001 estableció PostgreSQL con fallback automático a SQLite para que el desarrollo
+local no exigiera Docker. El ADR-007 ya restringió ese fallback a desarrollo, tras el
+BUG-001 (en producción degradaba en silencio y perdía todos los registros).
+
+Resuelto lo peligroso, quedaba el coste de mantener dos motores, que resultó ser mayor de
+lo que parecía:
+
+1. **Esquema duplicado a mano** en `createPostgresTables()` y `createSqliteTables()`. Cada
+   columna nueva había que escribirla dos veces con el tipo equivalente
+   (`UUID`↔`TEXT`, `BOOLEAN`↔`INTEGER`, `TIMESTAMP`↔`DATETIME`). El propio ADR-001 anotó
+   esta deuda al aceptarse.
+2. **Capa de traducción de placeholders**: el código escribía `?` (sintaxis SQLite) y
+   `query()` los convertía a `$1, $2…` con `sql.replace(/\?/g, …)`. Ese replace era global
+   e incondicional: habría roto cualquier consulta con un `?` dentro de un literal de texto.
+   Ninguna lo tenía todavía, pero era una mina enterrada.
+3. **Falta de paridad dev/producción**: toda la batería de pruebas del proyecto se había
+   ejecutado contra SQLite, mientras que lo desplegado corre sobre PostgreSQL. Se verificó
+   manualmente que la aplicación funcionaba en PostgreSQL, pero cada cambio futuro
+   arrastraba el mismo riesgo y habría exigido repetir esa verificación.
+4. **Peso muerto**: `sqlite3` es un módulo nativo que se compilaba en la imagen Docker sin
+   usarse jamás en producción. Retirarlo eliminó 122 paquetes del árbol de dependencias.
+
+### Opciones consideradas
+1. **Mantener el fallback** — cero trabajo; el riesgo grave ya estaba corregido. Pero
+   perpetúa el esquema duplicado, la traducción frágil y la falta de paridad.
+2. **Mantener SQLite sólo para tests automatizados** — atractivo sobre el papel, pero el
+   proyecto aún no tiene suite de tests, así que hoy no aporta nada.
+3. **PostgreSQL como único motor** — una fuente de verdad para el esquema, placeholders
+   nativos y las mismas garantías en desarrollo que en producción.
+
+### Decisión
+Opción 3. `server/db.js` exige `DATABASE_URL` siempre y falla al arrancar si falta o no
+conecta, con un mensaje que indica las dos vías de desarrollo local. Se eliminan
+`createSqliteTables()`, la rama SQLite de `query()` y la dependencia `sqlite3`.
+
+Las 27 consultas de `server/index.js` se migraron de `?` a placeholders nativos `$1, $2…`,
+de modo que `query()` queda como una envoltura fina sobre `pgPool.query()` sin ninguna
+reescritura del SQL.
+
+**El desarrollo local pasa a exigir PostgreSQL**, por una de estas dos vías:
+- `docker compose up -d db` (requiere copiar `.env.example` a `.env`), o
+- una rama de desarrollo de Neon, con `?sslmode=require`.
+
+### Consecuencias
+- Una sola definición del esquema. Añadir una columna se hace en un único sitio.
+- Desaparece la traducción de placeholders y con ella su fragilidad.
+- Lo que se prueba en local es exactamente lo que corre en producción.
+- **Coste asumido**: se pierde el `npm run dev` sin dependencias externas que buscaba el
+  ADR-001. Quien no tenga Docker ni una cadena de conexión no puede levantar el proyecto.
+  El equipo lo aceptó explícitamente a cambio de la paridad.
+- Sigue sin haber sistema de migraciones: las tablas se crean con `CREATE TABLE IF NOT
+  EXISTS` al arrancar, así que **añadir una columna no la agrega a una base de datos que ya
+  existe**; requiere un `ALTER TABLE` manual. Esta deuda es ahora más visible al haber un
+  solo motor, y merecerá su propio ADR cuando el esquema empiece a evolucionar.
