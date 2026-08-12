@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alojamiento para personas y mascotas | Red de Ayuda Terremoto Colombia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="dot"></div>
+    <div>
+      <div class="topbar-title">Red de Ayuda Terremoto Colombia</div>
+      <div class="topbar-sub">Alojamiento y refugio temporal en zona de desastre</div>
+    </div>
+    <button class="admin-link-btn" onclick="openAdminModal()" title="Acceso Administración Secreta">⚙️ Admin</button>
+  </header>
+
+  <!-- Notice Banner -->
+  <div class="notice-bar">
+    ⚠️ <strong>Aviso importante:</strong> Esta es una iniciativa ciudadana independiente. No reemplaza a las líneas de emergencia oficiales (Línea 123, UNGRD, Cruz Roja).
+  </div>
+
+  <!-- Navigation Tabs -->
+  <nav class="tabs-nav">
+    <button class="tab-btn active" onclick="switchTab('inicio')">🏠 Inicio</button>
+    <button class="tab-btn" onclick="switchTab('alojamientos')">🏢 Dónde Alojarse</button>
+    <button class="tab-btn" onclick="switchTab('necesidades')">🤝 Familias Buscando</button>
+    <button class="tab-btn" onclick="switchTab('mascotas')">🐾 Refugio Mascotas</button>
+  </nav>
+
+  <main class="container">
+
+    <!-- VIEW 1: INICIO -->
+    <section id="view-inicio" class="view active">
+      <div class="hero">
+        <h1>Alojamiento para personas y mascotas</h1>
+        <p>Plataforma comunitaria directa para conectar a personas afectadas por el terremoto del 10 de agosto de 2026 en Manizales, Pereira, Cali, Quibdó y Armenia con quienes ofrecen hospedaje, acopio o refugio animal.</p>
+        
+        <div class="live-counter">
+          <div class="counter-item">
+            <span class="counter-num" id="stat-viviendas">0</span>
+            <span class="counter-label">Viviendas offered</span>
+          </div>
+          <div class="counter-divider"></div>
+          <div class="counter-item">
+            <span class="counter-num" id="stat-necesidades">0</span>
+            <span class="counter-label">Familias buscando</span>
+          </div>
+        </div>
+      </div>
+
+      <h2 class="section-title">¿Cómo deseas participar?</h2>
+      <div class="action-grid">
+        <div class="action-card" onclick="openFormModal(1)">
+          <div class="action-icon">🏠</div>
+          <h3>Registrar una vivienda</h3>
+          <p>Ofrece una casa, habitación, apartamento o bodega para alojar personas.</p>
+          <button class="btn btn-primary">Ofrecer alojamiento</button>
+        </div>
+
+        <div class="action-card" onclick="openFormModal(2)">
+          <div class="action-icon">🆘</div>
+          <h3>Necesito vivienda</h3>
+          <p>Registra a tu familia si necesitas un lugar temporal donde alojarte.</p>
+          <button class="btn btn-warning">Solicitar vivienda</button>
+        </div>
+
+        <div class="action-card" onclick="openFormModal(3)">
+          <div class="action-icon">📦</div>
+          <h3>Registrar Centro de Acopio</h3>
+          <p>Inscribe un punto de recolección de donaciones o suministros.</p>
+          <button class="btn btn-secondary">Registrar acopio</button>
+        </div>
+
+        <div class="action-card" onclick="openFormModal(4)">
+          <div class="action-icon">🐶</div>
+          <h3>Registrar Refugio de Animales</h3>
+          <p>Ofrece espacio para temporal de perros, gatos u otras mascotas.</p>
+          <button class="btn btn-secondary">Ofrecer refugio</button>
+        </div>
+
+        <div class="action-card" onclick="openFormModal(5)">
+          <div class="action-icon">🐱</div>
+          <h3>Necesito Refugio para Mascota</h3>
+          <p>Registra a tus mascotas si necesitas un hogar temporal para ellas.</p>
+          <button class="btn btn-warning">Buscar refugio</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 2: LUGARES DONDE ALOJARSE -->
+    <section id="view-alojamientos" class="view">
+      <div class="filter-header">
+        <h2>Centros de Acopio y Viviendas Disponibles</h2>
+        <div class="filter-group">
+          <label for="filter-ciudad-alojamientos">Filtrar por Ciudad:</label>
+          <select id="filter-ciudad-alojamientos" onchange="renderAlojamientos()">
+            <option value="TODAS">Todas las ciudades</option>
+            <option value="Manizales">Manizales</option>
+            <option value="Pereira">Pereira</option>
+            <option value="Cali">Cali</option>
+            <option value="Quibdó">Quibdó</option>
+            <option value="Armenia">Armenia</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h3>📦 Centros de Acopio Registrados</h3>
+        <div id="list-centros-acopio" class="cards-grid">
+          <p class="empty-msg">Cargando centros de acopio...</p>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h3>🏠 Viviendas y Habitaciones Ofrecidas</h3>
+        <div id="list-viviendas" class="cards-grid">
+          <p class="empty-msg">Cargando viviendas...</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW 3: PERSONAS QUE NECESITAN VIVIENDA -->
+    <section id="view-necesidades" class="view">
+      <div class="filter-header">
+        <h2>Familias que Necesitan Alojamiento</h2>
+        <div class="filter-group">
+          <label for="filter-ciudad-necesidades">Filtrar por Ciudad:</label>
+          <select id="filter-ciudad-necesidades" onchange="renderNecesidades()">
+            <option value="TODAS">Todas las ciudades</option>
+            <option value="Manizales">Manizales</option>
+            <option value="Pereira">Pereira</option>
+            <option value="Cali">Cali</option>
+            <option value="Quibdó">Quibdó</option>
+            <option value="Armenia">Armenia</option>
+            <option value="Otra">Otra</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="list-necesidades-vivienda" class="cards-grid">
+        <p class="empty-msg">Cargando solicitudes de vivienda...</p>
+      </div>
+    </section>
+
+    <!-- VIEW 4: REFUGIO PARA MASCOTAS -->
+    <section id="view-mascotas" class="view">
+      <div class="filter-header">
+        <h2>Refugios y Ayuda para Mascotas</h2>
+      </div>
+
+      <div class="sub-section">
+        <h3>🏠 Refugios Disponibles para Animales</h3>
+        <div id="list-refugios-mascota" class="cards-grid">
+          <p class="empty-msg">Cargando refugios...</p>
+        </div>
+      </div>
+
+      <div class="sub-section">
+        <h3>🐾 Mascotas que Necesitan Refugio Temporal</h3>
+        <div id="list-necesidades-mascota" class="cards-grid">
+          <p class="empty-msg">Cargando mascotas que buscan refugio...</p>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL DE FORMULARIOS -->
+  <div id="modal-form" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeFormModal()">&times;</button>
+      <div id="modal-form-content"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DE DETALLE -->
+  <div id="modal-detail" class="modal-overlay">
+    <div class="modal-card">
+      <button class="modal-close" onclick="closeDetailModal()">&times;</button>
+      <div id="modal-detail-content"></div>
+    </div>
+  </div>
+
+  <!-- MODAL DE ADMIN SECRETO -->
+  <div id="modal-admin" class="modal-overlay">
+    <div class="modal-card modal-wide">
+      <button class="modal-close" onclick="closeAdminModal()">&times;</button>
+      <h2>⚙️ Panel de Administración y Moderación Secreta</h2>
+      <div id="admin-login-sec">
+        <p>Ingresa la clave maestra para moderar registros:</p>
+        <div class="form-group">
+          <input type="password" id="admin-pass-input" placeholder="Clave Maestra de Admin" class="form-control">
+        </div>
+        <button class="btn btn-primary" onclick="loginAdmin()">Ingresar al Panel</button>
+      </div>
+      <div id="admin-dashboard-sec" style="display:none;">
+        <div class="admin-controls">
+          <span class="badge badge-ok">Modo Administrador Activo</span>
+          <button class="btn btn-secondary btn-sm" onclick="fetchAdminData()">🔄 Recargar Todo</button>
+        </div>
+        <div id="admin-content-list" class="admin-tables-container"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  <div id="toast-container"></div>
+
+  <!-- FOOTER OBLIGATORIO -->
+  <footer class="footer">
+    <p>Si tienes alguna duda sobre la funcionalidad de la página, puedes contactarnos:</p>
+    <ul>
+      <li>👤 <strong>Luis Felipe Montes Cárdenas</strong>. Celular: <a href="tel:3219246806">3219246806</a></li>
+      <li>👤 <strong>Emmanuel Peñuela Chica</strong>. Celular: <a href="tel:3152307376">3152307376</a></li>
+      <li>👤 <strong>Juan Esteban Botero Sánchez</strong>: <a href="tel:3136061429">313 606 1429</a></li>
+    </ul>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
