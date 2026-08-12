@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alojamiento para personas y mascotas | Red de ayuda terremoto Colombia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#0B2540;
+    --navy-2:#123453;
+    --teal:#0F6B66;
+    --teal-light:#E4F3F1;
+    --amber:#E9762B;
+    --amber-light:#FDEDE0;
+    --bg:#F5F7F9;
+    --paper:#FFFFFF;
+    --line:#DCE3E8;
+    --text:#132131;
+    --text-soft:#51606D;
+    --danger:#C0392B;
+    --ok:#1E8E5A;
+    --radius:14px;
+    --shadow: 0 1px 2px rgba(11,37,64,.06), 0 8px 24px rgba(11,37,64,.06);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Manrope',system-ui,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:60px;
+  }
+  .mono{font-family:'IBM Plex Mono',monospace;letter-spacing:.02em;}
+  a{color:inherit;}
+
+  /* ===== Top bar ===== */
+  .topbar{
+    background:var(--navy);
+    color:#fff;
+    padding:14px 20px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    position:sticky;
+    top:0;
+    z-index:50;
+    box-shadow:0 2px 10px rgba(0,0,0,.15);
+  }
+  .topbar .dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--amber);
+    box-shadow:0 0 0 4px rgba(233,118,43,.25);
+    flex:none;
+    animation:pulse 2s infinite;
+  }
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(233,118,43,.45);}
+    70%{box-shadow:0 0 0 8px rgba(233,118,43,0);}
+    100%{box-shadow:0 0 0 0 rgba(233,118,43,0);}
+  }
+  .topbar-title{font-weight:800;font-size:15px;letter-spacing:.01em;}
+  .topbar-sub{font-size:12px;opacity:.75;font-family:'IBM Plex Mono',monospace;}
+
+  /* ===== Tabs ===== */
+  .tabs{
+    display:flex;
+    gap:4px;
+    background:var(--navy-2);
+    padding:0 12px;
+    overflow-x:auto;
+    position:sticky;
+    top:49px;
+    z-index:49;
+  }
+  .tab-btn{
+    appearance:none;border:none;background:transparent;
+    color:rgba(255,255,255,.68);
+    font-family:'Manrope',sans-serif;
+    font-weight:600;
+    font-size:13.5px;
+    padding:12px 14px;
+    cursor:pointer;
+    white-space:nowrap;
+    border-bottom:3px solid transparent;
+    transition:.15s;
+  }
+  .tab-btn:hover{color:#fff;}
+  .tab-btn.active{color:#fff;border-bottom-color:var(--amber);}
+
+  .view{display:none; max-width:980px; margin:0 auto; padding:28px 18px 10px;}
+  .view.active{display:block;}
+
+  /* ===== Hero ===== */
+  .hero{
+    padding:34px 22px 30px;
+    background:linear-gradient(135deg,var(--navy) 0%, var(--teal) 130%);
+    color:#fff;
+    border-radius:20px;
+    margin-bottom:26px;
+    position:relative;
+    overflow:hidden;
+  }
+  .hero::after{
+    content:"";
+    position:absolute; right:-60px; top:-60px;
+    width:220px;height:220px;border-radius:50%;
+    background:radial-gradient(circle, rgba(233,118,43,.35), transparent 70%);
+  }
+  .hero h1{
+    font-size:clamp(24px,4.2vw,34px);
+    margin:0 0 10px;
+    font-weight:800;
+    letter-spacing:-.01em;
+    max-width:640px;
+  }
+  .hero p{
+    margin:0;
+    color:rgba(255,255,255,.86);
+    font-size:15px;
+    max-width:560px;
+    line-height:1.55;
+  }
+  .hero .badge{
+    display:inline-flex;align-items:center;gap:7px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.25);
+    padding:5px 12px 5px 10px;
+    border-radius:100px;
+    font-size:12px;
+    font-family:'IBM Plex Mono',monospace;
+    margin-bottom:16px;
+  }
+
+  .disclaimer{
+    display:flex; gap:10px;
+    background:var(--amber-light);
+    border:1px solid #F3CBA3;
+    color:#7A3C0E;
+    padding:12px 14px;
+    border-radius:12px;
+    font-size:13px;
+    line-height:1.5;
+    margin-bottom:26px;
+  }
+  .disclaimer b{color:#5C2C08;}
+
+  /* ===== Stats ticker ===== */
+  .stats{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+    margin-bottom:28px;
+  }
+  .stat{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 12px;
+    text-align:left;
+  }
+  .stat .num{font-size:22px;font-weight:800;color:var(--navy);font-family:'IBM Plex Mono',monospace;}
+  .stat .lbl{font-size:11.5px;color:var(--text-soft);font-weight:600;margin-top:2px;}
+  @media (max-width:640px){ .stats{grid-template-columns:repeat(2,1fr);} }
+
+  .section-title{
+    font-size:19px;font-weight:800;color:var(--navy);
+    margin:0 0 4px;
+  }
+  .section-sub{
+    font-size:13.5px;color:var(--text-soft); margin:0 0 16px;
+  }
+
+  /* ===== Action cards grid (Inicio) ===== */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:14px;
+    margin-bottom:10px;
+  }
+  .card-btn{
+    display:flex; flex-direction:column; align-items:flex-start; gap:10px;
+    text-align:left;
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px 18px;
+    cursor:pointer;
+    box-shadow:var(--shadow);
+    transition:transform .15s, box-shadow .15s, border-color .15s;
+    font-family:inherit;
+    width:100%;
+  }
+  .card-btn:hover{transform:translateY(-3px); border-color:var(--teal); box-shadow:0 10px 24px rgba(15,107,102,.15);}
+  .card-btn:active{transform:translateY(0);}
+  .card-icon{
+    width:44px;height:44px;border-radius:11px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;
+  }
+  .ic-offer{background:var(--teal-light); color:var(--teal);}
+  .ic-need{background:#FDECEC; color:var(--danger);}
+  .ic-acopio{background:#EAF1FD; color:#2255A4;}
+  .ic-refugio{background:#F1EAFD; color:#6A3FB8;}
+  .ic-petneed{background:var(--amber-light); color:var(--amber);}
+  .card-btn h3{margin:0; font-size:15.5px; font-weight:700; color:var(--navy);}
+  .card-btn p{margin:0; font-size:12.5px; color:var(--text-soft); line-height:1.45;}
+  .card-btn .go{
+    margin-top:auto; font-size:12px; font-weight:700; color:var(--teal);
+    font-family:'IBM Plex Mono',monospace;
+  }
+
+  /* ===== Lists (read-only) ===== */
+  .list{display:flex; flex-direction:column; gap:10px; margin-bottom:32px;}
+  .item{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+    cursor:pointer;
+    display:flex; justify-content:space-between; align-items:center; gap:12px;
+    transition:.15s;
+  }
+  .item:hover{border-color:var(--teal); box-shadow:var(--shadow);}
+  .item-main{min-width:0;}
+  .item-title{font-weight:700; font-size:14.5px; color:var(--navy); margin:0 0 3px;}
+  .item-sub{font-size:12.5px; color:var(--text-soft); margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .pill{
+    font-size:11px; font-weight:700; padding:4px 10px; border-radius:100px;
+    font-family:'IBM Plex Mono',monospace; white-space:nowrap; flex:none;
+  }
+  .pill-open{background:var(--teal-light); color:var(--teal);}
+  .pill-closed{background:#EEE; color:#777;}
+  .pill-waiting{background:var(--amber-light); color:#A5540E;}
+  .pill-found{background:#E6F6ED; color:var(--ok);}
+  .empty{
+    text-align:center; padding:36px 20px; color:var(--text-soft);
+    background:var(--paper); border:1px dashed var(--line); border-radius:12px; font-size:13.5px;
+  }
+
+  /* ===== Modal ===== */
+  .overlay{
+    display:none; position:fixed; inset:0; background:rgba(11,37,64,.55);
+    z-index:100; align-items:flex-start; justify-content:center;
+    padding:24px 14px; overflow-y:auto;
+    backdrop-filter:blur(2px);
+  }
+  .overlay.active{display:flex;}
+  .modal{
+    background:var(--paper); border-radius:18px; width:100%; max-width:560px;
+    box-shadow:0 20px 60px rgba(0,0,0,.3);
+    margin:auto 0;
+    animation:pop .18s ease-out;
+  }
+  @keyframes pop{ from{transform:translateY(8px); opacity:0;} to{transform:translateY(0); opacity:1;} }
+  .modal-head{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 20px; border-bottom:1px solid var(--line);
+  }
+  .modal-head h2{margin:0; font-size:16.5px; color:var(--navy); font-weight:800;}
+  .modal-close{
+    appearance:none; border:none; background:var(--bg); color:var(--text-soft);
+    width:30px;height:30px;border-radius:50%; cursor:pointer; font-size:16px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .modal-close:hover{background:var(--line);}
+  .modal-body{padding:20px; max-height:70vh; overflow-y:auto;}
+  .modal-foot{padding:16px 20px 20px;}
+
+  .field{margin-bottom:16px;}
+  .field label{
+    display:block; font-size:12.5px; font-weight:700; color:var(--navy);
+    margin-bottom:6px;
+  }
+  .field .req{color:var(--danger);}
+  .field input[type=text], .field input[type=tel], .field select, .field textarea, .field input[type=file]{
+    width:100%; padding:11px 12px; border:1px solid var(--line); border-radius:10px;
+    font-family:inherit; font-size:14px; color:var(--text); background:#fff;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{
+    outline:2px solid var(--teal); outline-offset:1px; border-color:var(--teal);
+  }
+  .field textarea{resize:vertical; min-height:70px;}
+  .field .hint{font-size:11.5px; color:var(--text-soft); margin-top:5px;}
+  .radiogroup{display:flex; flex-wrap:wrap; gap:8px;}
+  .radiogroup label{
+    display:flex; align-items:center; gap:6px;
+    border:1px solid var(--line); border-radius:100px; padding:8px 13px;
+    font-size:13px; font-weight:600; cursor:pointer; color:var(--text-soft);
+    margin:0;
+  }
+  .radiogroup input{accent-color:var(--teal);}
+  .radiogroup input:checked + span{color:var(--navy);}
+
+  .btn{
+    appearance:none; border:none; border-radius:11px; padding:13px 18px;
+    font-family:inherit; font-weight:700; font-size:14.5px; cursor:pointer;
+    width:100%; transition:.15s;
+  }
+  .btn-primary{background:var(--teal); color:#fff;}
+  .btn-primary:hover{background:#0C5C58;}
+  .btn-secondary{background:var(--bg); color:var(--navy); border:1px solid var(--line);}
+  .btn-secondary:hover{background:var(--line);}
+  .btn:disabled{opacity:.6; cursor:not-allowed;}
+
+  .toast{
+    position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+    background:var(--navy); color:#fff; padding:13px 20px; border-radius:11px;
+    font-size:13.5px; font-weight:600; z-index:200; box-shadow:0 10px 30px rgba(0,0,0,.3);
+    display:flex; align-items:center; gap:10px;
+    opacity:0; pointer-events:none; transition:.25s;
+  }
+  .toast.show{opacity:1; transform:translateX(-50%) translateY(-6px);}
+  .toast .ok-ic{color:#6FE3B4;}
+
+  .detail-row{display:flex; gap:10px; padding:9px 0; border-bottom:1px solid var(--bg); font-size:13.5px;}
+  .detail-row:last-child{border-bottom:none;}
+  .detail-row .k{width:150px; flex:none; font-weight:700; color:var(--text-soft); font-size:12.5px;}
+  .detail-row .v{color:var(--text); line-height:1.5;}
+  .detail-photo{width:100%; border-radius:12px; margin-bottom:14px; display:block; max-height:280px; object-fit:cover;}
+  .spinner{
+    width:16px;height:16px;border:2px solid rgba(255,255,255,.4); border-top-color:#fff;
+    border-radius:50%; animation:spin .7s linear infinite; display:inline-block;
+  }
+  @keyframes spin{to{transform:rotate(360deg);}}
+  .loading-list{text-align:center; padding:30px; color:var(--text-soft); font-size:13.5px;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="dot"></div>
+  <div>
+    <div class="topbar-title">Red de Ayuda — Terremoto Colombia</div>
+    <div class="topbar-sub">10 de agosto de 2026</div>
+  </div>
+</div>
+
+<div class="tabs" role="tablist">
+  <button class="tab-btn active" data-tab="inicio">Inicio</button>
+  <button class="tab-btn" data-tab="vivienda">Listado de lugares donde alojarse</button>
+  <button class="tab-btn" data-tab="necesitan">Personas que necesitan vivienda</button>
+  <button class="tab-btn" data-tab="mascotas">Refugio para mascotas</button>
+</div>
+
+<!-- ===================== TAB: INICIO ===================== -->
+<div class="view active" id="view-inicio">
+  <div class="hero">
+    <div class="badge">🕊️ Ayuda comunitaria y solidaria</div>
+    <h1>Alojamiento para personas y mascotas</h1>
+    <p>Conectamos a quienes tienen un espacio para ofrecer con las familias y mascotas que lo necesitan tras el terremoto. Registra tu vivienda, tu centro de acopio o tu necesidad de alojamiento en menos de un minuto. Todo lo que registres aquí queda visible para cualquier persona que entre a este enlace.</p>
+  </div>
+
+  <div class="disclaimer">
+    <div>⚠️</div>
+    <div><b>Esta es una iniciativa ciudadana de ayuda mutua</b>, no reemplaza los canales oficiales de emergencia. Para emergencias vitales llama a la <b>Línea 123</b> o comunícate con la UNGRD y la Cruz Roja de tu ciudad.</div>
+  </div>
+
+  <div class="stats" id="stats-bar">
+    <div class="stat"><div class="num" id="stat-vivienda">–</div><div class="lbl">Viviendas ofrecidas</div></div>
+    <div class="stat"><div class="num" id="stat-necesitan">–</div><div class="lbl">Familias buscando</div></div>
+    <div class="stat"><div class="num" id="stat-acopio">–</div><div class="lbl">Centros de acopio</div></div>
+    <div class="stat"><div class="num" id="stat-refugio">–</div><div class="lbl">Refugios de mascotas</div></div>
+  </div>
+
+  <div class="section-title">¿Qué necesitas hacer?</div>
+  <div class="section-sub">Presiona el cuadro correspondiente para abrir el formulario.</div>
+
+  <div class="grid">
+    <button class="card-btn" data-open="form-vivienda">
+      <div class="card-icon ic-offer">🏠</div>
+      <h3>Registrar una vivienda</h3>
+      <p>Ofrece tu casa, apartamento, bodega o habitación para alojar damnificados, en arriendo o gratis.</p>
+      <div class="go">Llenar formulario →</div>
+    </button>
+
+    <button class="card-btn" data-open="form-necesito">
+      <div class="card-icon ic-need">🙋</div>
+      <h3>Necesito vivienda</h3>
+      <p>Regístrate si tu familia perdió su vivienda y buscas dónde alojarte temporalmente.</p>
+      <div class="go">Llenar formulario →</div>
+    </button>
+
+    <button class="card-btn" data-open="form-acopio">
+      <div class="card-icon ic-acopio">📦</div>
+      <h3>Registrar centro de acopio</h3>
+      <p>Indica dónde se están recibiendo donaciones para los damnificados.</p>
+      <div class="go">Llenar formulario →</div>
+    </button>
+
+    <button class="card-btn" data-open="form-refugio">
+      <div class="card-icon ic-refugio">🐾</div>
+      <h3>Registrar refugio para animales</h3>
+      <p>Ofrece un espacio para alojar mascotas de familias damnificadas.</p>
+      <div class="go">Llenar formulario →</div>
+    </button>
+
+    <button class="card-btn" data-open="form-petneed">
+      <div class="card-icon ic-petneed">🐶</div>
+      <h3>Necesito refugio para mi mascota</h3>
+      <p>Regístrate si necesitas un lugar temporal para tu perro, gato u otra mascota.</p>
+      <div class="go">Llenar formulario →</div>
+    </button>
+  </div>
+</div>
+
+<!-- ===================== TAB: LISTADO VIVIENDA ===================== -->
+<div class="view" id="view-vivienda">
+  <div class="section-title">Centros de acopio</div>
+  <div class="section-sub">Puntos donde se están recibiendo donaciones. Presiona uno para ver el detalle.</div>
+  <div class="list" id="list-acopio"><div class="loading-list">Cargando…</div></div>
+
+  <div class="section-title">Lista de vivienda y habitaciones</div>
+  <div class="section-sub">Espacios ofrecidos para alojar damnificados. Presiona uno para ver el detalle.</div>
+  <div class="list" id="list-vivienda"><div class="loading-list">Cargando…</div></div>
+</div>
+
+<!-- ===================== TAB: NECESITAN VIVIENDA ===================== -->
+<div class="view" id="view-necesitan">
+  <div class="section-title">Lista de personas que necesitan vivienda</div>
+  <div class="section-sub">Familias buscando alojamiento temporal. Presiona una para ver el detalle.</div>
+  <div class="list" id="list-necesitan"><div class="loading-list">Cargando…</div></div>
+</div>
+
+<!-- ===================== TAB: MASCOTAS ===================== -->
+<div class="view" id="view-mascotas">
+  <div class="section-title">Refugios para mascotas</div>
+  <div class="section-sub">Espacios que reciben mascotas de familias damnificadas. Presiona uno para ver el detalle.</div>
+  <div class="list" id="list-refugio"><div class="loading-list">Cargando…</div></div>
+
+  <div class="section-title">Mascotas que necesitan refugio</div>
+  <div class="section-sub">Solicitudes de refugio temporal para mascotas. Presiona una para ver el detalle.</div>
+  <div class="list" id="list-petneed"><div class="loading-list">Cargando…</div></div>
+</div>
+
+<!-- ===================== MODALS: FORMS ===================== -->
+
+<!-- Form 1: Registrar vivienda -->
+<div class="overlay" id="ov-form-vivienda">
+  <div class="modal">
+    <div class="modal-head"><h2>🏠 Registrar una vivienda</h2><button class="modal-close" data-close>✕</button></div>
+    <form id="form-vivienda">
+      <div class="modal-body">
+        <div class="field">
+          <label>Tipo de espacio <span class="req">*</span></label>
+          <select required name="tipo">
+            <option value="">Selecciona una opción</option>
+            <option>Casa</option><option>Bodega</option><option>Apartamento</option><option>Habitación</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad <span class="req">*</span></label>
+          <select required name="ciudad">
+            <option value="">Selecciona una opción</option>
+            <option>Manizales</option><option>Pereira</option><option>Cali</option><option>Quibdó</option><option>Armenia</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Barrio o localidad <span class="req">*</span></label>
+          <input type="text" required name="barrio" placeholder="Ej: Barrio San Luis, cerca al parque">
+        </div>
+        <div class="field">
+          <label>¿Cuántas personas puede albergar? <span class="req">*</span></label>
+          <select required name="capacidad">
+            <option value="">Selecciona una opción</option>
+            <option>Una</option><option>Dos</option><option>Tres</option><option>Cuatro</option><option>Más de cuatro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Detalles de la vivienda</label>
+          <textarea name="detalles" placeholder="Ej: cuarto independiente con baño, incluye alimentación, es en arriendo económico, etc."></textarea>
+        </div>
+        <div class="field">
+          <label>Nombre del encargado <span class="req">*</span></label>
+          <input type="text" required name="nombreEncargado" placeholder="Nombre completo">
+        </div>
+        <div class="field">
+          <label>Contacto <span class="req">*</span></label>
+          <input type="text" required name="contacto" placeholder="Número de celular o WhatsApp">
+        </div>
+        <div class="field">
+          <label>Foto (opcional)</label>
+          <input type="file" accept="image/*" name="foto">
+          <div class="hint">Ayuda a generar confianza. Se comprime automáticamente.</div>
+        </div>
+        <div class="field">
+          <label>Estado <span class="req">*</span></label>
+          <div class="radiogroup">
+            <label><input type="radio" name="estado" value="Busca ocupante" checked><span>Busca ocupante</span></label>
+            <label><input type="radio" name="estado" value="Ya fue ocupada"><span>Ya fue ocupada</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="submit" class="btn btn-primary">Registrar vivienda</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Form 2: Necesito vivienda -->
+<div class="overlay" id="ov-form-necesito">
+  <div class="modal">
+    <div class="modal-head"><h2>🙋 Necesito vivienda</h2><button class="modal-close" data-close>✕</button></div>
+    <form id="form-necesito">
+      <div class="modal-body">
+        <div class="field">
+          <label>Nombre de la familia o el encargado <span class="req">*</span></label>
+          <input type="text" required name="nombreFamilia" placeholder="Ej: Familia Gómez / Juan Pérez">
+        </div>
+        <div class="field">
+          <label>Contacto <span class="req">*</span></label>
+          <input type="text" required name="contacto" placeholder="Número de celular o WhatsApp">
+        </div>
+        <div class="field">
+          <label>Ciudad <span class="req">*</span></label>
+          <select required name="ciudad">
+            <option value="">Selecciona una opción</option>
+            <option>Manizales</option><option>Pereira</option><option>Cali</option><option>Quibdó</option><option>Armenia</option>
+            <option>Otra</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>¿Cuántas personas son? <span class="req">*</span></label>
+          <select required name="cantidadPersonas">
+            <option value="">Selecciona una opción</option>
+            <option>Una</option><option>Dos</option><option>Tres</option><option>Cuatro</option><option>Más de cuatro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>¿Requiere alguna condición especial? <span class="req">*</span></label>
+          <div class="radiogroup">
+            <label><input type="radio" name="condicionEspecial" value="No" checked><span>No</span></label>
+            <label><input type="radio" name="condicionEspecial" value="Sí"><span>Sí</span></label>
+          </div>
+          <div class="hint">Por ejemplo: adulto mayor, persona en condición de discapacidad, etc.</div>
+        </div>
+        <div class="field" id="wrap-descripcionCondicion" style="display:none;">
+          <label>Breve descripción de la condición especial</label>
+          <textarea name="descripcionCondicion" placeholder="Describe la condición especial"></textarea>
+        </div>
+        <div class="field">
+          <label>Descripción de la vivienda que necesitan <span class="req">*</span></label>
+          <textarea required name="descripcionViviendaNecesita" placeholder="Sector preferido, tipo de vivienda (apartamento, cuarto), cuántas habitaciones, etc."></textarea>
+        </div>
+        <div class="field">
+          <label>Estado <span class="req">*</span></label>
+          <div class="radiogroup">
+            <label><input type="radio" name="estado" value="Buscando alojamiento" checked><span>Buscando alojamiento</span></label>
+            <label><input type="radio" name="estado" value="Ya encontró alojamiento"><span>Ya encontró alojamiento</span></label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="submit" class="btn btn-primary">Registrar solicitud</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Form 3: Centro de acopio -->
+<div class="overlay" id="ov-form-acopio">
+  <div class="modal">
+    <div class="modal-head"><h2>📦 Registrar centro de acopio</h2><button class="modal-close" data-close>✕</button></div>
+    <form id="form-acopio">
+      <div class="modal-body">
+        <div class="field">
+          <label>Ciudad <span class="req">*</span></label>
+          <select required name="ciudad">
+            <option value="">Selecciona una opción</option>
+            <option>Manizales</option><option>Pereira</option><option>Cali</option><option>Quibdó</option><option>Armenia</option>
+            <option>Otra</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Sector <span class="req">*</span></label>
+          <input type="text" required name="sector" placeholder="Ej: Centro, barrio, comuna">
+        </div>
+        <div class="field">
+          <label>Dirección <span class="req">*</span></label>
+          <input type="text" required name="direccion" placeholder="Dirección exacta">
+        </div>
+        <div class="field">
+          <label>Contacto <span class="req">*</span></label>
+          <input type="text" required name="contacto" placeholder="Número de celular o WhatsApp">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="submit" class="btn btn-primary">Registrar centro de acopio</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Form 4: Refugio para animales -->
+<div class="overlay" id="ov-form-refugio">
+  <div class="modal">
+    <div class="modal-head"><h2>🐾 Registrar refugio para animales</h2><button class="modal-close" data-close>✕</button></div>
+    <form id="form-refugio">
+      <div class="modal-body">
+        <div class="field">
+          <label>Tipo de mascota que recibe <span class="req">*</span></label>
+          <select required name="tipoMascota">
+            <option value="">Selecciona una opción</option>
+            <option>Perros</option><option>Gatos</option><option>Perros y gatos</option><option>Otros</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Ciudad <span class="req">*</span></label>
+          <select required name="ciudad">
+            <option value="">Selecciona una opción</option>
+            <option>Manizales</option><option>Pereira</option><option>Cali</option><option>Quibdó</option><option>Armenia</option>
+            <option>Otra</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Sector <span class="req">*</span></label>
+          <input type="text" required name="sector" placeholder="Ej: Centro, barrio, comuna">
+        </div>
+        <div class="field">
+          <label>Dirección <span class="req">*</span></label>
+          <input type="text" required name="direccion" placeholder="Dirección exacta">
+        </div>
+        <div class="field">
+          <label>Contacto <span class="req">*</span></label>
+          <input type="text" required name="contacto" placeholder="Número de celular o WhatsApp">
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="submit" class="btn btn-primary">Registrar refugio</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Form 5: Necesito refugio para mi mascota -->
+<div class="overlay" id="ov-form-petneed">
+  <div class="modal">
+    <div class="modal-head"><h2>🐶 Necesito refugio para mi mascota</h2><button class="modal-close" data-close>✕</button></div>
+    <form id="form-petneed">
+      <div class="modal-body">
+        <div class="field">
+          <label>Nombre de la persona encargada <span class="req">*</span></label>
+          <input type="text" required name="nombreEncargado" placeholder="Nombre completo">
+        </div>
+        <div class="field">
+          <label>Contacto <span class="req">*</span></label>
+          <input type="text" required name="contacto" placeholder="Número de celular o WhatsApp">
+        </div>
+        <div class="field">
+          <label>Tipo de mascota <span class="req">*</span></label>
+          <select required name="tipoMascota">
+            <option value="">Selecciona una opción</option>
+            <option>Perro</option><option>Gato</option><option>Perros y gatos</option><option>Otros</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>¿Cuántas mascotas son? <span class="req">*</span></label>
+          <select required name="cantidadMascotas">
+            <option value="">Selecciona una opción</option>
+            <option>Una</option><option>Dos</option><option>Tres o más</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-foot">
+        <button type="submit" class="btn btn-primary">Registrar solicitud</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ===================== MODAL: DETAIL VIEW ===================== -->
+<div class="overlay" id="ov-detail">
+  <div class="modal">
+    <div class="modal-head"><h2 id="detail-title">Detalle</h2><button class="modal-close" data-close>✕</button></div>
+    <div class="modal-body" id="detail-body"></div>
+    <div class="modal-foot"><button class="btn btn-secondary" data-close>Cerrar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ok-ic">✓</span><span id="toast-text"></span></div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- Storage keys ----------
+  var KEYS = {
+    viviendas: 'viviendas',
+    necesitan: 'necesitan_vivienda',
+    acopios: 'centros_acopio',
+    refugios: 'refugios_mascotas',
+    petneeds: 'mascotas_necesitan_refugio'
+  };
+
+  function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,8); }
+
+  async function loadList(key){
+    try{
+      var r = await window.storage.get(key, true);
+      return r && r.value ? JSON.parse(r.value) : [];
+    }catch(e){ return []; }
+  }
+  async function saveList(key, arr){
+    try{
+      var r = await window.storage.set(key, JSON.stringify(arr), true);
+      return !!r;
+    }catch(e){ return false; }
+  }
+  async function savePhoto(id, dataUrl){
+    try{ await window.storage.set('foto_'+id, dataUrl, true); }catch(e){}
+  }
+  async function loadPhoto(id){
+    try{
+      var r = await window.storage.get('foto_'+id, true);
+      return r ? r.value : null;
+    }catch(e){ return null; }
+  }
+
+  // ---------- Tabs ----------
+  var tabBtns = document.querySelectorAll('.tab-btn');
+  var views = document.querySelectorAll('.view');
+  tabBtns.forEach(function(btn){
+    btn.addEventListener('click', function(){
+      tabBtns.forEach(function(b){ b.classList.remove('active'); });
+      views.forEach(function(v){ v.classList.remove('active'); });
+      btn.classList.add('active');
+      document.getElementById('view-'+btn.dataset.tab).classList.add('active');
+      if(btn.dataset.tab === 'vivienda'){ renderVivienda(); renderAcopio(); }
+      if(btn.dataset.tab === 'necesitan'){ renderNecesitan(); }
+      if(btn.dataset.tab === 'mascotas'){ renderRefugio(); renderPetneed(); }
+    });
+  });
+
+  // ---------- Modal open/close ----------
+  document.querySelectorAll('[data-open]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      document.getElementById('ov-'+btn.dataset.open).classList.add('active');
+    });
+  });
+  document.querySelectorAll('[data-close]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      btn.closest('.overlay').classList.remove('active');
+    });
+  });
+  document.querySelectorAll('.overlay').forEach(function(ov){
+    ov.addEventListener('click', function(e){
+      if(e.target === ov) ov.classList.remove('active');
+    });
+  });
+
+  function toast(msg){
+    var t = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = msg;
+    t.classList.add('show');
+    setTimeout(function(){ t.classList.remove('show'); }, 2800);
+  }
+
+  // ---------- Condición especial toggle ----------
+  var condRadios = document.querySelectorAll('input[name="condicionEspecial"]');
+  condRadios.forEach(function(r){
+    r.addEventListener('change', function(){
+      document.getElementById('wrap-descripcionCondicion').style.display =
+        (document.querySelector('input[name="condicionEspecial"]:checked').value === 'Sí') ? 'block' : 'none';
+    });
+  });
+
+  // ---------- Image compression ----------
+  function compressImage(file){
+    return new Promise(function(resolve){
+      if(!file){ resolve(null); return; }
+      var reader = new FileReader();
+      reader.onload = function(e){
+        var img = new Image();
+        img.onload = function(){
+          var maxW = 480;
+          var scale = Math.min(1, maxW / img.width);
+          var canvas = document.createElement('canvas');
+          canvas.width = img.width * scale;
+          canvas.height = img.height * scale;
+          var ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.55));
+        };
+        img.onerror = function(){ resolve(null); };
+        img.src = e.target.result;
+      };
+      reader.onerror = function(){ resolve(null); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function formToObj(form){
+    var fd = new FormData(form);
+    var obj = {};
+    fd.forEach(function(v,k){ if(k !== 'foto') obj[k] = v; });
+    return obj;
+  }
+
+  function setSubmitting(form, state){
+    var btn = form.querySelector('button[type=submit]');
+    btn.disabled = state;
+    btn.innerHTML = state ? '<span class="spinner"></span> Guardando…' : btn.dataset.label;
+  }
+  document.querySelectorAll('form button[type=submit]').forEach(function(b){ b.dataset.label = b.textContent; });
+
+  // ---------- Submit handlers ----------
+  document.getElementById('form-vivienda').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var form = e.target;
+    setSubmitting(form, true);
+    var obj = formToObj(form);
+    var fileInput = form.querySelector('input[type=file]');
+    var file = fileInput.files[0];
+    var id = uid();
+    obj.id = id;
+    obj.fecha = new Date().toISOString();
+    obj.hasFoto = false;
+    if(file){
+      var dataUrl = await compressImage(file);
+      if(dataUrl){ await savePhoto(id, dataUrl); obj.hasFoto = true; }
+    }
+    var list = await loadList(KEYS.viviendas);
+    list.unshift(obj);
+    var ok = await saveList(KEYS.viviendas, list);
+    setSubmitting(form, false);
+    if(ok){
+      form.reset();
+      document.getElementById('ov-form-vivienda').classList.remove('active');
+      toast('Vivienda registrada. ¡Gracias por ayudar!');
+      refreshStats();
+    } else { toast('No se pudo guardar. Intenta de nuevo.'); }
+  });
+
+  document.getElementById('form-necesito').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var form = e.target;
+    setSubmitting(form, true);
+    var obj = formToObj(form);
+    obj.id = uid();
+    obj.fecha = new Date().toISOString();
+    var list = await loadList(KEYS.necesitan);
+    list.unshift(obj);
+    var ok = await saveList(KEYS.necesitan, list);
+    setSubmitting(form, false);
+    if(ok){
+      form.reset();
+      document.getElementById('wrap-descripcionCondicion').style.display = 'none';
+      document.getElementById('ov-form-necesito').classList.remove('active');
+      toast('Solicitud registrada. Esperamos que encuentres alojamiento pronto.');
+      refreshStats();
+    } else { toast('No se pudo guardar. Intenta de nuevo.'); }
+  });
+
+  document.getElementById('form-acopio').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var form = e.target;
+    setSubmitting(form, true);
+    var obj = formToObj(form);
+    obj.id = uid();
+    obj.fecha = new Date().toISOString();
+    var list = await loadList(KEYS.acopios);
+    list.unshift(obj);
+    var ok = await saveList(KEYS.acopios, list);
+    setSubmitting(form, false);
+    if(ok){
+      form.reset();
+      document.getElementById('ov-form-acopio').classList.remove('active');
+      toast('Centro de acopio registrado. ¡Gracias!');
+      refreshStats();
+    } else { toast('No se pudo guardar. Intenta de nuevo.'); }
+  });
+
+  document.getElementById('form-refugio').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var form = e.target;
+    setSubmitting(form, true);
+    var obj = formToObj(form);
+    obj.id = uid();
+    obj.fecha = new Date().toISOString();
+    var list = await loadList(KEYS.refugios);
+    list.unshift(obj);
+    var ok = await saveList(KEYS.refugios, list);
+    setSubmitting(form, false);
+    if(ok){
+      form.reset();
+      document.getElementById('ov-form-refugio').classList.remove('active');
+      toast('Refugio registrado. ¡Gracias por ayudar a las mascotas!');
+      refreshStats();
+    } else { toast('No se pudo guardar. Intenta de nuevo.'); }
+  });
+
+  document.getElementById('form-petneed').addEventListener('submit', async function(e){
+    e.preventDefault();
+    var form = e.target;
+    setSubmitting(form, true);
+    var obj = formToObj(form);
+    obj.id = uid();
+    obj.fecha = new Date().toISOString();
+    var list = await loadList(KEYS.petneeds);
+    list.unshift(obj);
+    var ok = await saveList(KEYS.petneeds, list);
+    setSubmitting(form, false);
+    if(ok){
+      form.reset();
+      document.getElementById('ov-form-petneed').classList.remove('active');
+      toast('Solicitud registrada.');
+      refreshStats();
+    } else { toast('No se pudo guardar. Intenta de nuevo.'); }
+  });
+
+  // ---------- Rendering lists ----------
+  function fmtDate(iso){
+    try{
+      var d = new Date(iso);
+      return d.toLocaleDateString('es-CO', {day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit'});
+    }catch(e){ return ''; }
+  }
+
+  function openDetail(title, rows, photoDataUrl){
+    document.getElementById('detail-title').textContent = title;
+    var body = document.getElementById('detail-body');
+    var html = '';
+    if(photoDataUrl){ html += '<img class="detail-photo" src="'+photoDataUrl+'" alt="Foto">'; }
+    rows.forEach(function(r){
+      if(!r[1]) return;
+      html += '<div class="detail-row"><div class="k">'+r[0]+'</div><div class="v">'+escapeHtml(r[1])+'</div></div>';
+    });
+    body.innerHTML = html;
+    document.getElementById('ov-detail').classList.add('active');
+  }
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, function(c){
+      return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c];
+    });
+  }
+
+  async function renderVivienda(){
+    var el = document.getElementById('list-vivienda');
+    var list = await loadList(KEYS.viviendas);
+    if(!list.length){ el.innerHTML = '<div class="empty">Todavía no hay viviendas registradas. Sé el primero en ofrecer un espacio.</div>'; return; }
+    el.innerHTML = '';
+    list.forEach(function(it){
+      var div = document.createElement('div');
+      div.className = 'item';
+      var open = it.estado !== 'Ya fue ocupada';
+      div.innerHTML =
+        '<div class="item-main">'+
+          '<p class="item-title">'+escapeHtml(it.tipo||'Vivienda')+' en '+escapeHtml(it.ciudad||'')+'</p>'+
+          '<p class="item-sub">'+escapeHtml(it.barrio||'')+' · Capacidad: '+escapeHtml(it.capacidad||'')+'</p>'+
+        '</div>'+
+        '<span class="pill '+(open?'pill-open':'pill-closed')+'">'+escapeHtml(it.estado||'')+'</span>';
+      div.addEventListener('click', async function(){
+        var photo = it.hasFoto ? await loadPhoto(it.id) : null;
+        openDetail('🏠 '+ (it.tipo||'Vivienda'), [
+          ['Tipo', it.tipo], ['Ciudad', it.ciudad], ['Barrio o localidad', it.barrio],
+          ['Capacidad', it.capacidad], ['Detalles', it.detalles],
+          ['Encargado', it.nombreEncargado], ['Contacto', it.contacto],
+          ['Estado', it.estado], ['Registrado', fmtDate(it.fecha)]
+        ], photo);
+      });
+      el.appendChild(div);
+    });
+  }
+
+  async function renderAcopio(){
+    var el = document.getElementById('list-acopio');
+    var list = await loadList(KEYS.acopios);
+    if(!list.length){ el.innerHTML = '<div class="empty">Todavía no hay centros de acopio registrados.</div>'; return; }
+    el.innerHTML = '';
+    list.forEach(function(it){
+      var div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML =
+        '<div class="item-main">'+
+          '<p class="item-title">Centro de acopio · '+escapeHtml(it.ciudad||'')+'</p>'+
+          '<p class="item-sub">'+escapeHtml(it.sector||'')+' · '+escapeHtml(it.direccion||'')+'</p>'+
+        '</div>'+
+        '<span class="pill pill-open">Activo</span>';
+      div.addEventListener('click', function(){
+        openDetail('📦 Centro de acopio', [
+          ['Ciudad', it.ciudad], ['Sector', it.sector], ['Dirección', it.direccion],
+          ['Contacto', it.contacto], ['Registrado', fmtDate(it.fecha)]
+        ]);
+      });
+      el.appendChild(div);
+    });
+  }
+
+  async function renderNecesitan(){
+    var el = document.getElementById('list-necesitan');
+    var list = await loadList(KEYS.necesitan);
+    if(!list.length){ el.innerHTML = '<div class="empty">Todavía no hay familias registradas.</div>'; return; }
+    el.innerHTML = '';
+    list.forEach(function(it){
+      var div = document.createElement('div');
+      div.className = 'item';
+      var found = it.estado === 'Ya encontró alojamiento';
+      div.innerHTML =
+        '<div class="item-main">'+
+          '<p class="item-title">'+escapeHtml(it.nombreFamilia||'Familia')+' — '+escapeHtml(it.ciudad||'')+'</p>'+
+          '<p class="item-sub">'+escapeHtml(it.cantidadPersonas||'')+' persona(s)'+(it.condicionEspecial==='Sí' ? ' · Condición especial' : '')+'</p>'+
+        '</div>'+
+        '<span class="pill '+(found?'pill-found':'pill-waiting')+'">'+escapeHtml(it.estado||'')+'</span>';
+      div.addEventListener('click', function(){
+        openDetail('🙋 '+(it.nombreFamilia||'Familia'), [
+          ['Encargado', it.nombreFamilia], ['Contacto', it.contacto], ['Ciudad', it.ciudad],
+          ['Personas', it.cantidadPersonas], ['¿Condición especial?', it.condicionEspecial],
+          ['Descripción condición', it.descripcionCondicion],
+          ['Vivienda que necesita', it.descripcionViviendaNecesita],
+          ['Estado', it.estado], ['Registrado', fmtDate(it.fecha)]
+        ]);
+      });
+      el.appendChild(div);
+    });
+  }
+
+  async function renderRefugio(){
+    var el = document.getElementById('list-refugio');
+    var list = await loadList(KEYS.refugios);
+    if(!list.length){ el.innerHTML = '<div class="empty">Todavía no hay refugios registrados.</div>'; return; }
+    el.innerHTML = '';
+    list.forEach(function(it){
+      var div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML =
+        '<div class="item-main">'+
+          '<p class="item-title">Refugio · '+escapeHtml(it.tipoMascota||'')+' — '+escapeHtml(it.ciudad||'')+'</p>'+
+          '<p class="item-sub">'+escapeHtml(it.sector||'')+' · '+escapeHtml(it.direccion||'')+'</p>'+
+        '</div>'+
+        '<span class="pill pill-open">Activo</span>';
+      div.addEventListener('click', function(){
+        openDetail('🐾 Refugio para mascotas', [
+          ['Tipo de mascota', it.tipoMascota], ['Ciudad', it.ciudad], ['Sector', it.sector],
+          ['Dirección', it.direccion], ['Contacto', it.contacto], ['Registrado', fmtDate(it.fecha)]
+        ]);
+      });
+      el.appendChild(div);
+    });
+  }
+
+  async function renderPetneed(){
+    var el = document.getElementById('list-petneed');
+    var list = await loadList(KEYS.petneeds);
+    if(!list.length){ el.innerHTML = '<div class="empty">Todavía no hay mascotas registradas.</div>'; return; }
+    el.innerHTML = '';
+    list.forEach(function(it){
+      var div = document.createElement('div');
+      div.className = 'item';
+      div.innerHTML =
+        '<div class="item-main">'+
+          '<p class="item-title">'+escapeHtml(it.nombreEncargado||'')+' · '+escapeHtml(it.tipoMascota||'')+'</p>'+
+          '<p class="item-sub">'+escapeHtml(it.cantidadMascotas||'')+' mascota(s)</p>'+
+        '</div>'+
+        '<span class="pill pill-waiting">Buscando refugio</span>';
+      div.addEventListener('click', function(){
+        openDetail('🐶 '+(it.nombreEncargado||'Solicitud'), [
+          ['Encargado', it.nombreEncargado], ['Contacto', it.contacto],
+          ['Tipo de mascota', it.tipoMascota], ['Cantidad', it.cantidadMascotas],
+          ['Registrado', fmtDate(it.fecha)]
+        ]);
+      });
+      el.appendChild(div);
+    });
+  }
+
+  async function refreshStats(){
+    var v = await loadList(KEYS.viviendas);
+    var n = await loadList(KEYS.necesitan);
+    var a = await loadList(KEYS.acopios);
+    var r = await loadList(KEYS.refugios);
+    document.getElementById('stat-vivienda').textContent = v.filter(function(x){return x.estado!=='Ya fue ocupada';}).length;
+    document.getElementById('stat-necesitan').textContent = n.filter(function(x){return x.estado!=='Ya encontró alojamiento';}).length;
+    document.getElementById('stat-acopio').textContent = a.length;
+    document.getElementById('stat-refugio').textContent = r.length;
+  }
+
+  // ---------- Init ----------
+  refreshStats();
+  renderVivienda(); renderAcopio(); renderNecesitan(); renderRefugio(); renderPetneed();
+
+})();
+</script>
+</body>
+</html>
