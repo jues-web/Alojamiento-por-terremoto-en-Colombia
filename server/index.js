@@ -149,7 +149,7 @@ app.get('/api/stats', async (req, res) => {
     const necesidades = await query(`SELECT COUNT(*) as count FROM necesidad_vivienda WHERE estado = 'Buscando alojamiento' AND sospechoso = false`);
     
     const countV = parseInt(viviendas[0]?.count || 0, 10);
-    const countN = parseIntnecesidades = parseInt(necesidades[0]?.count || 0, 10);
+    const countN = parseInt(necesidades[0]?.count || 0, 10);
     
     res.json({ viviendas: countV, necesidades: countN });
   } catch (err) {
