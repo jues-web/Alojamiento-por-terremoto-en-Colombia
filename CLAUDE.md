@@ -129,4 +129,4 @@ Los cinco GET públicos pasan por `sinDatosPrivados()`, que elimina el `owner_to
 - `docs/BUGS.md` documenta un bug conocido abierto: `pg.Pool` sin reconexión automática tras un reinicio de Postgres (BUG-K002).
 - Los cinco envíos de formulario pasan por `enviarFormulario()` en `public/app.js`, que centraliza el bloqueo del botón y el manejo de errores de red y de validación. Un formulario nuevo debe usarlo en vez de llamar a `fetch` directamente.
 - `entrypoint.sh` corre `npm ci --only=production` si falta `node_modules`; con `docker compose` la imagen ya las trae del build stage.
-- Las fotos viajan como base64 dentro del JSON de `GET /api/viviendas`: ~80 KB por registro en cada carga del listado. Relevante para usuarios con datos móviles limitados.
+- Las fotos se **almacenan** como data URI base64 en `foto.imagen_base64` (ADR-002), pero se **sirven** como WebP binario desde `GET /api/viviendas/:id/foto` (ADR-008). El listado nunca incluye la imagen: devolver filas crudas del JOIN con `foto` reintroduciría los MB por carga que ese endpoint existe para evitar.

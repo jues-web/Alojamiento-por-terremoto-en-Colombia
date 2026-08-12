@@ -19,6 +19,9 @@
 - Helper `enviarFormulario()` en `public/app.js`, compartido por los cinco formularios de
   registro: bloquea el botón durante el envío (con estado "Enviando..."), distingue los
   fallos de red de los errores del servidor y muestra el mensaje adecuado en cada caso.
+- **`GET /api/viviendas/:id/foto`**: sirve la foto de una vivienda como WebP binario, con
+  caché de un año (`immutable`). Devuelve 404 si la vivienda no tiene foto, no existe o
+  está en cuarentena (ADR-008).
 - Validación de estados permitidos por entidad en los endpoints `PATCH .../estado`
   (`Busca ocupante` / `Ya fue ocupada` y `Buscando alojamiento` / `Ya encontró alojamiento`).
 
@@ -36,6 +39,12 @@
   el fallback sigue igual.
 - `toggleEstadoVivienda()` y `toggleEstadoNecesidad()` muestran el error del servidor y los
   fallos de red mediante `showToast`, en vez de fallar en silencio.
+- ⚠️ **Cambio incompatible**: `GET /api/viviendas` ya **no** devuelve el campo `imagen_base64`.
+  Antes embebía el data URI completo de cada foto en el JSON (~616 KB por vivienda medidos),
+  lo que hacía que la pestaña "Dónde Alojarse" descargara varios MB de golpe en dispositivos
+  con datos limitados (MUST-HAVE #5 del Project Brief). Las fotos se piden ahora una a una
+  por `GET /api/viviendas/:id/foto`, y sólo cuando entran en pantalla (`loading="lazy"`).
+  El campo `foto_id` indica si hay imagen que pedir. Ver ADR-008.
 
 ### Corregido
 - **BUG-001**: el fallback silencioso a SQLite hacía que la plataforma perdiera todos los
