@@ -32,26 +32,7 @@
 
 ## 🔴 BUGS ACTIVOS
 
-### BUG-005 — Typo en `/api/stats` crea una variable global implícita
-- **Estado**: 🔴 ABIERTO
-- **Severidad**: 🟢 Baja
-- **Rama afectada**: `juan`
-- **Reportado por**: Agente IA — 2026-08-12
-- **Asignado a**: *sin asignar*
-- **Descripción**: En `server/index.js`, dentro de `GET /api/stats`, la línea
-  `const countN = parseIntnecesidades = parseInt(necesidades[0]?.count || 0, 10);`
-  contiene un typo evidente. Asigna a `parseIntnecesidades`, un identificador no declarado,
-  creando una variable global implícita.
-- **Pasos para reproducir**:
-  1. Leer `server/index.js`, endpoint `GET /api/stats`.
-- **Resultado esperado**: `const countN = parseInt(necesidades[0]?.count || 0, 10);`
-- **Resultado actual**: Funciona por accidente. `countN` recibe el valor correcto y el
-  endpoint responde bien, porque CommonJS se ejecuta en modo *sloppy*. En modo estricto
-  (o al migrar a ESM) lanzaría `ReferenceError` y tumbaría el endpoint.
-- **Commit de fix**: *(pendiente)*
-- **Notas**: Detectado durante la auditoría previa al despliegue. No se corrigió en esa
-  tanda porque quedaba fuera del alcance acordado (los tres bloqueadores de despliegue).
-  Es un fix de una línea.
+> *No hay bugs activos registrados a la fecha.*
 
 ---
 
@@ -156,6 +137,29 @@
   Esto cubre parcialmente **BUG-K001** para este flujo concreto; los formularios de registro
   siguen pendientes.
 
+### BUG-005 — Typo en `/api/stats` crea una variable global implícita
+- **Estado**: ✅ RESUELTO
+- **Severidad**: 🟢 Baja
+- **Rama afectada**: `juan`
+- **Reportado por**: Agente IA — 2026-08-12
+- **Asignado a**: Agente IA
+- **Descripción**: En `server/index.js`, dentro de `GET /api/stats`, la línea
+  `const countN = parseIntnecesidades = parseInt(necesidades[0]?.count || 0, 10);`
+  contenía un typo. Asignaba a `parseIntnecesidades`, un identificador no declarado,
+  creando una variable global implícita.
+- **Pasos para reproducir**:
+  1. Leer `server/index.js`, endpoint `GET /api/stats`.
+- **Resultado esperado**: `const countN = parseInt(necesidades[0]?.count || 0, 10);`
+- **Resultado actual (antes del fix)**: Funcionaba por accidente. `countN` recibía el valor
+  correcto y el endpoint respondía bien, porque CommonJS se ejecuta en modo *sloppy*. En modo
+  estricto (o al migrar a ESM) habría lanzado `ReferenceError` tumbando el endpoint, y con él
+  el contador del banner principal.
+- **Commit de fix**: `7d1efdc`
+- **Notas**: Verificado ejecutando una copia del servidor con `'use strict'` antepuesto:
+  `/api/stats` devuelve los conteos correctos y no se registra ningún `ReferenceError`.
+  Se revisó además el resto de `server/index.js`, `server/db.js` y `public/app.js` en busca
+  de otras asignaciones dobles del mismo tipo: no hay ninguna.
+
 ---
 
 ## 📌 BUGS CONOCIDOS (Sin prioridad de fix inmediato)
@@ -190,9 +194,9 @@
 
 | Categoría | Cantidad |
 |-----------|----------|
-| 🔴 Activos | 1 |
+| 🔴 Activos | 0 |
 | 🟡 En Progreso | 0 |
-| ✅ Resueltos | 4 |
+| ✅ Resueltos | 5 |
 | 📌 Conocidos | 2 |
 | **Total** | **7** |
 

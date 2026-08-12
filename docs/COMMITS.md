@@ -38,7 +38,9 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
-| *(pendiente)* | 2026-08-12 | Agente IA | `docs: registrar BUG-001 a BUG-005, ADR-007 y agregar CLAUDE.md` | ✅ ok |
+| *(pendiente)* | 2026-08-12 | Agente IA | `docs: cerrar BUG-005 en BUGS.md, CHANGELOG y CLAUDE.md` | ✅ ok |
+| `7d1efdc` | 2026-08-12 | Agente IA | `fix(api): corregir typo en /api/stats que creaba una global implicita (BUG-005)` | ✅ ok |
+| `f43a457` | 2026-08-12 | Agente IA | `docs: registrar BUG-001 a BUG-005, ADR-007 y agregar CLAUDE.md` | ✅ ok |
 | `df81a17` | 2026-08-12 | Agente IA | `fix(api): corregir bloqueadores de seguridad previos al despliegue` | ✅ ok |
 | `119fe3d` | 2026-08-12 | Agente IA | `chore: forzar LF en el repositorio con .gitattributes` | ✅ ok |
 | `0ffcc07` | 2026-08-12 | Juan Esteban B. | `refactor: mover Arquitectura a docs/origen como documentacion historica de inicio del proyecto` | ✅ ok |
@@ -79,7 +81,7 @@
 |------|--------------|---------------|-----------------|
 | `main` | 1 | 2026-08-12 | Juan Esteban B. |
 | `dev` | 2 | 2026-08-12 | Juan Esteban B. |
-| `juan` | 8 | 2026-08-12 | Juan Esteban B. |
+| `juan` | 10 | 2026-08-12 | Juan Esteban B. |
 | `emmanuel` | 1 | 2026-08-11 | Juan Esteban B. |
 
 > Actualizar esta tabla cada vez que se agreguen commits.

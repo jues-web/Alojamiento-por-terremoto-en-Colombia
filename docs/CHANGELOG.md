@@ -32,6 +32,9 @@
 - **BUG-001**: el fallback silencioso a SQLite hacía que la plataforma perdiera todos los
   registros en cada reinicio del contenedor, sin ningún error visible.
 - **BUG-004**: el botón "Cambiar Estado" no daba ninguna señal cuando la operación fallaba.
+- **BUG-005**: typo en `GET /api/stats` (`parseIntnecesidades`) que creaba una variable global
+  implícita. Funcionaba en modo *sloppy*, pero habría lanzado `ReferenceError` en modo estricto
+  o al migrar a ESM, tumbando el contador del banner principal.
 
 ### Eliminado
 - Valor por defecto `admin123` de `ADMIN_PASSWORD` en `entrypoint.sh` y `docker-compose.yml`.
