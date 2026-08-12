@@ -50,7 +50,7 @@
   por `GET /api/viviendas/:id/foto`, y sólo cuando entran en pantalla (`loading="lazy"`).
   El campo `foto_id` indica si hay imagen que pedir. Ver ADR-008.
 
-### Corregido
+- **BUG-006**: Corrección en la entrega y visualización de imágenes de viviendas y habitaciones. Se actualizó la consulta SQL en `GET /api/viviendas` con `COALESCE(v.foto_id, f.id) AS foto_id` y `LEFT JOIN foto f ON (v.foto_id = f.id OR f.vivienda_id = v.id)` para vincular correctamente fotos existentes. Además en `public/app.js` se implementó `getPlaceholderImg(tipo)` para renderizar ilustraciones SVG vectoriales cuando la vivienda no posea foto personalizada o falle la carga en red.
 - **BUG-001**: el fallback silencioso a SQLite hacía que la plataforma perdiera todos los
   registros en cada reinicio del contenedor, sin ningún error visible.
 - **BUG-004**: el botón "Cambiar Estado" no daba ninguna señal cuando la operación fallaba.

@@ -167,8 +167,9 @@ app.get('/api/stats', async (req, res) => {
 app.get('/api/viviendas', async (req, res) => {
   try {
     const rows = await query(`
-      SELECT v.*
+      SELECT v.*, COALESCE(v.foto_id, f.id) AS foto_id
       FROM vivienda v
+      LEFT JOIN foto f ON f.vivienda_id = v.id
       WHERE v.sospechoso = false
       ORDER BY v.fecha_registro DESC
     `);
@@ -186,7 +187,7 @@ app.get('/api/viviendas/:id/foto', async (req, res) => {
     const rows = await query(
       `SELECT f.imagen_base64
        FROM vivienda v
-       JOIN foto f ON v.foto_id = f.id
+       LEFT JOIN foto f ON (v.foto_id = f.id OR f.vivienda_id = v.id)
        WHERE v.id = $1 AND v.sospechoso = false`,
       [id]
     );

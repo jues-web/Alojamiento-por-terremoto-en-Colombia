@@ -510,7 +510,18 @@ async function renderAlojamientos() {
     }
   } catch (e) {}
 
-  // Render Viviendas
+function getPlaceholderImg(tipo) {
+  const icons = {
+    'Casa': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g1)" rx="8"/><path d="M200 45 L280 110 L260 110 L260 160 L140 160 L140 110 L120 110 Z" fill="none" stroke="#38BDF8" stroke-width="6" stroke-linejoin="round"/><path d="M185 160 L185 125 L215 125 L215 160 Z" fill="#38BDF8"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Casa de Alojamiento</text></svg>`,
+    'Apartamento': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g2)" rx="8"/><rect x="150" y="40" width="100" height="120" rx="4" fill="none" stroke="#818CF8" stroke-width="5"/><rect x="170" y="60" width="20" height="20" fill="#818CF8" rx="2"/><rect x="210" y="60" width="20" height="20" fill="#818CF8" rx="2"/><rect x="170" y="95" width="20" height="20" fill="#818CF8" rx="2"/><rect x="210" y="95" width="20" height="20" fill="#818CF8" rx="2"/><rect x="188" y="130" width="24" height="30" fill="#818CF8"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Apartamento Disponible</text></svg>`,
+    'Habitación': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g3)" rx="8"/><path d="M130 140 L130 90 C130 80 140 70 150 70 L250 70 C260 70 270 80 270 90 L270 140 Z" fill="none" stroke="#F43F5E" stroke-width="5"/><rect x="145" y="85" width="45" height="25" fill="#F43F5E" rx="3"/><rect x="210" y="85" width="45" height="25" fill="#F43F5E" rx="3"/><rect x="130" y="115" width="140" height="25" fill="#F43F5E" rx="3"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Habitación Disponible</text></svg>`,
+    'Bodega': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g4)" rx="8"/><path d="M120 150 L120 80 L200 50 L280 80 L280 150 Z" fill="none" stroke="#10B981" stroke-width="5"/><rect x="170" y="100" width="60" height="50" fill="#10B981" rx="2"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Bodega / Espacio de Acopio</text></svg>`
+  };
+  const key = Object.keys(icons).find(k => (tipo || '').toLowerCase().includes(k.toLowerCase())) || 'Casa';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(icons[key]);
+}
+
+// Render Viviendas
   try {
     const res = await fetch('/api/viviendas');
     const viviendas = await res.json();
@@ -521,9 +532,12 @@ async function renderAlojamientos() {
     if (!filtered.length) {
       listViviendasEl.innerHTML = `<p class="empty-msg">No hay viviendas registradas en esta ciudad.</p>`;
     } else {
-      listViviendasEl.innerHTML = filtered.map(v => `
+      listViviendasEl.innerHTML = filtered.map(v => {
+        const placeholder = getPlaceholderImg(v.tipo);
+        const imgSrc = v.foto_id ? `/api/viviendas/${v.id}/foto` : placeholder;
+        return `
         <div class="card">
-          ${v.foto_id ? `<img src="/api/viviendas/${v.id}/foto" class="card-img" alt="Foto de la vivienda" loading="lazy" decoding="async">` : ''}
+          <img src="${imgSrc}" class="card-img" alt="Foto de ${v.tipo}" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='${placeholder}';">
           <div class="card-header">
             <h4 class="card-title">🏠 ${v.tipo} en ${v.barrio} (${v.ciudad})</h4>
             <span class="badge ${v.estado === 'Busca ocupante' ? 'badge-ok' : 'badge-warning'}">${v.estado}</span>
@@ -541,7 +555,8 @@ async function renderAlojamientos() {
             <button class="btn btn-outline btn-sm" onclick="reportar('vivienda', '${v.id}')">🚩 Reportar</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
     }
   } catch (e) {}
 }
