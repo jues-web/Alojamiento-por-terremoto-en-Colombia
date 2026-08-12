@@ -19,6 +19,7 @@
 
 ## 🌿 RAMA: `main` (Producción — solo merges desde dev)
 
+| *(pendiente)* | 2026-08-12 | Agente IA | `merge(main): integrar desde dev el fix BUG-007` | ✅ ok |
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
 | `48df43f` | 2026-08-12 | Agente IA | `merge(main): integrar desde dev el MVP v1.0.0 completo preparado para despliegue` | ✅ ok |
