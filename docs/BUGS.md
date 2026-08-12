@@ -44,6 +44,21 @@
 
 ## ✅ BUGS RESUELTOS
 
+### BUG-008 — `getPlaceholderImg` declarada dentro de `try/catch` desbalancea el scope de `renderAlojamientos`
+- **Estado**: ✅ RESUELTO
+- **Severidad**: 🔴 Crítica
+- **Rama afectada**: `juan`
+- **Reportado por**: Agente IA — 2026-08-12
+- **Asignado a**: Agente IA
+- **Descripción**: La función `getPlaceholderImg()` en `public/app.js` fue declarada dentro del primer bloque `try` de `renderAlojamientos()`, entre el cierre del `catch` de centros-acopio y el segundo `try` de viviendas. Esto desbalanceaba las llaves de `renderAlojamientos`: el segundo `try` para viviendas quedaba sin `catch` (estructura inválida), causando que la función cerrara antes de tiempo o produjera un SyntaxError silencioso en algunos motores JS. Como resultado, los refugios de mascotas (que dependen de `fetchAdminData`, también afectado por el scope global dañado) no aparecían correctamente en el panel de administración.
+- **Pasos para reproducir**:
+  1. Abrir el panel de administración con la clave correcta.
+  2. Los refugios de mascotas no aparecen aunque existan registros en la BD.
+- **Resultado esperado**: Todos los tipos de registros (Viviendas, Necesidades Vivienda, Centros de Acopio, Refugios Mascotas, Necesidades Mascotas) aparecen en el panel admin.
+- **Resultado actual (antes del fix)**: Refugios de mascotas no visibles en el admin.
+- **Commit de fix**: *(pendiente de hash)*
+- **Notas**: `getPlaceholderImg` movida a scope global antes de `renderAlojamientos`. Los dos bloques `try/catch` (centros-acopio y viviendas) ahora son independientes y correctamente balanceados.
+
 ### BUG-007 — Validación de teléfono acepta más de 10 dígitos (11 dígitos permitidos)
 - **Estado**: ✅ RESUELTO
 - **Severidad**: 🟡 Media
@@ -250,8 +265,8 @@
 |-----------|----------|
 | 🔴 Activos | 0 |
 | 🟡 En Progreso | 0 |
-| ✅ Resueltos | 8 |
+| ✅ Resueltos | 9 |
 | 📌 Conocidos | 1 |
-| **Total** | **9** |
+| **Total** | **10** |
 
 > Actualizar esta tabla cada vez que cambie el estado de un bug.

@@ -51,6 +51,7 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| *(pendiente)* | 2026-08-12 | Agente IA | `fix(ui,db,api): corregir BUG-008 scope de getPlaceholderImg, añadir columna limite_alcanzado y notificacion admin al llegar a 10 publicaciones` | ✅ ok |
 | `3a2f8d1` | 2026-08-12 | Agente IA | `feat(api,ui): control limite de IPs persistente y mejoras de UI de panel admin (ADR-010)` | ✅ ok |
 | `b9b6d28` | 2026-08-12 | Agente IA | `docs: cerrar BUG-007 en BUGS.md, CHANGELOG y actualizar COMMITS.md` | ✅ ok |
 | `264ed79` | 2026-08-12 | Agente IA | `fix(api,ui): limitar números de teléfono a máximo 10 dígitos (BUG-007)` | ✅ ok |
@@ -106,7 +107,7 @@
 |------|--------------|---------------|-----------------|
 | `main` | 1 | 2026-08-11 | Juan Esteban B. |
 | `dev` | 5 | 2026-08-12 | Emmanuel P. / Agente IA |
-| `juan` | 18 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `juan` | 19 | 2026-08-12 | Juan Esteban B. / Agente IA |
 | `emmanuel` | 1 | 2026-08-11 | Juan Esteban B. |
 
 > Actualizar esta tabla cada vez que se agreguen commits.

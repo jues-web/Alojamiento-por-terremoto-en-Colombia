@@ -479,11 +479,23 @@ async function submitNecesidadMascota(e) {
 
 // ===== RENDERS DE VISTAS Y LISTAS =====
 
-// Pestaña 2: Alojamientos
+// Helper de imágenes placeholder por tipo de vivienda (scope global, fuera de renderAlojamientos)
+function getPlaceholderImg(tipo) {
+  const icons = {
+    'Casa': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g1)" rx="8"/><path d="M200 45 L280 110 L260 110 L260 160 L140 160 L140 110 L120 110 Z" fill="none" stroke="#38BDF8" stroke-width="6" stroke-linejoin="round"/><path d="M185 160 L185 125 L215 125 L215 160 Z" fill="#38BDF8"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Casa de Alojamiento</text></svg>`,
+    'Apartamento': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g2)" rx="8"/><rect x="150" y="40" width="100" height="120" rx="4" fill="none" stroke="#818CF8" stroke-width="5"/><rect x="170" y="60" width="20" height="20" fill="#818CF8" rx="2"/><rect x="210" y="60" width="20" height="20" fill="#818CF8" rx="2"/><rect x="170" y="95" width="20" height="20" fill="#818CF8" rx="2"/><rect x="210" y="95" width="20" height="20" fill="#818CF8" rx="2"/><rect x="188" y="130" width="24" height="30" fill="#818CF8"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Apartamento Disponible</text></svg>`,
+    'Habitación': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g3)" rx="8"/><path d="M130 140 L130 90 C130 80 140 70 150 70 L250 70 C260 70 270 80 270 90 L270 140 Z" fill="none" stroke="#F43F5E" stroke-width="5"/><rect x="145" y="85" width="45" height="25" fill="#F43F5E" rx="3"/><rect x="210" y="85" width="45" height="25" fill="#F43F5E" rx="3"/><rect x="130" y="115" width="140" height="25" fill="#F43F5E" rx="3"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Habitación Disponible</text></svg>`,
+    'Bodega': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g4)" rx="8"/><path d="M120 150 L120 80 L200 50 L280 80 L280 150 Z" fill="none" stroke="#10B981" stroke-width="5"/><rect x="170" y="100" width="60" height="50" fill="#10B981" rx="2"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Bodega / Espacio de Acopio</text></svg>`
+  };
+  const key = Object.keys(icons).find(k => (tipo || '').toLowerCase().includes(k.toLowerCase())) || 'Casa';
+  return 'data:image/svg+xml;utf8,' + encodeURIComponent(icons[key]);
+}
+
+// Pestaña 2: Alojamientos (BUG-008: función reestructurada con dos try/catch independientes)
 async function renderAlojamientos() {
   const ciudadSel = document.getElementById('filter-ciudad-alojamientos').value;
 
-  // Render Centros de Acopio
+  // --- Render Centros de Acopio ---
   try {
     const res = await fetch('/api/centros-acopio');
     const listAcopioEl = document.getElementById('list-centros-acopio');
@@ -497,7 +509,6 @@ async function renderAlojamientos() {
         listAcopioEl.innerHTML = `<p class="empty-msg">Error en formato de datos de centros de acopio.</p>`;
       } else {
         const filtered = (ciudadSel === 'TODAS') ? centros : centros.filter(c => c.ciudad.toLowerCase() === ciudadSel.toLowerCase());
-
         if (!filtered.length) {
           listAcopioEl.innerHTML = `<p class="empty-msg">No hay centros de acopio registrados en esta ciudad.</p>`;
         } else {
@@ -525,18 +536,7 @@ async function renderAlojamientos() {
     document.getElementById('list-centros-acopio').innerHTML = `<p class="empty-msg">Error de conexión al cargar centros de acopio.</p>`;
   }
 
-function getPlaceholderImg(tipo) {
-  const icons = {
-    'Casa': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g1)" rx="8"/><path d="M200 45 L280 110 L260 110 L260 160 L140 160 L140 110 L120 110 Z" fill="none" stroke="#38BDF8" stroke-width="6" stroke-linejoin="round"/><path d="M185 160 L185 125 L215 125 L215 160 Z" fill="#38BDF8"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Casa de Alojamiento</text></svg>`,
-    'Apartamento': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g2)" rx="8"/><rect x="150" y="40" width="100" height="120" rx="4" fill="none" stroke="#818CF8" stroke-width="5"/><rect x="170" y="60" width="20" height="20" fill="#818CF8" rx="2"/><rect x="210" y="60" width="20" height="20" fill="#818CF8" rx="2"/><rect x="170" y="95" width="20" height="20" fill="#818CF8" rx="2"/><rect x="210" y="95" width="20" height="20" fill="#818CF8" rx="2"/><rect x="188" y="130" width="24" height="30" fill="#818CF8"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Apartamento Disponible</text></svg>`,
-    'Habitación': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g3)" rx="8"/><path d="M130 140 L130 90 C130 80 140 70 150 70 L250 70 C260 70 270 80 270 90 L270 140 Z" fill="none" stroke="#F43F5E" stroke-width="5"/><rect x="145" y="85" width="45" height="25" fill="#F43F5E" rx="3"/><rect x="210" y="85" width="45" height="25" fill="#F43F5E" rx="3"/><rect x="130" y="115" width="140" height="25" fill="#F43F5E" rx="3"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Habitación Disponible</text></svg>`,
-    'Bodega': `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="100%" height="160"><defs><linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#1E293B"/><stop offset="100%" stop-color="#0F172A"/></linearGradient></defs><rect width="400" height="200" fill="url(#g4)" rx="8"/><path d="M120 150 L120 80 L200 50 L280 80 L280 150 Z" fill="none" stroke="#10B981" stroke-width="5"/><rect x="170" y="100" width="60" height="50" fill="#10B981" rx="2"/><text x="200" y="185" font-family="sans-serif" font-size="13" font-weight="600" fill="#94A3B8" text-anchor="middle">Bodega / Espacio de Acopio</text></svg>`
-  };
-  const key = Object.keys(icons).find(k => (tipo || '').toLowerCase().includes(k.toLowerCase())) || 'Casa';
-  return 'data:image/svg+xml;utf8,' + encodeURIComponent(icons[key]);
-}
-
-// Render Viviendas
+  // --- Render Viviendas ---
   try {
     const res = await fetch('/api/viviendas');
     const listViviendasEl = document.getElementById('list-viviendas');
@@ -550,7 +550,6 @@ function getPlaceholderImg(tipo) {
         listViviendasEl.innerHTML = `<p class="empty-msg">Error en formato de datos de viviendas.</p>`;
       } else {
         const filtered = (ciudadSel === 'TODAS') ? viviendas : viviendas.filter(v => v.ciudad.toLowerCase() === ciudadSel.toLowerCase());
-
         if (!filtered.length) {
           listViviendasEl.innerHTML = `<p class="empty-msg">No hay viviendas registradas en esta ciudad.</p>`;
         } else {
@@ -912,17 +911,25 @@ async function fetchAdminData() {
       </table>
 
       <h3>🛡️ Control de IPs</h3>
+      ${(data.ips || []).some(ip => ip.limite_alcanzado && !ip.is_allowed_by_admin && !ip.is_blocked) ? `
+        <div style="background:rgba(251,146,60,0.15);border:1px solid #fb923c;border-radius:8px;padding:12px 16px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.3rem;">⚠️</span>
+          <span style="color:#fb923c;font-weight:600;">Hay IPs que han alcanzado el límite de 10 publicaciones y requieren revisión. Revisa la tabla y decide si permitir o bloquear.</span>
+        </div>` : ''}
       <table class="admin-table">
-        <tr><th>IP</th><th>Publicaciones</th><th>Bloqueado</th><th>Admin Override</th><th>Último uso</th><th>Acciones</th></tr>
+        <tr><th>IP</th><th>Publicaciones</th><th>Estado</th><th>Admin Override</th><th>Último uso</th><th>Acciones</th></tr>
         ${(data.ips || []).map(ip => `
-          <tr>
+          <tr style="${ip.limite_alcanzado && !ip.is_allowed_by_admin && !ip.is_blocked ? 'background:rgba(251,146,60,0.08);' : ''}">
             <td>${ip.ip}</td>
-            <td>${ip.post_count}</td>
-            <td>${ip.is_blocked ? '🚨 Sí' : 'No'}</td>
-            <td>${ip.is_allowed_by_admin ? '✅ Sí' : 'No'}</td>
+            <td>
+              ${ip.post_count}
+              ${ip.limite_alcanzado && !ip.is_allowed_by_admin ? ' <span style="background:#fb923c;color:#fff;border-radius:4px;padding:1px 6px;font-size:0.7rem;font-weight:700;">⚠️ Límite</span>' : ''}
+            </td>
+            <td>${ip.is_blocked ? '🚨 Bloqueada' : (ip.limite_alcanzado && !ip.is_allowed_by_admin ? '<span style="color:#fb923c;font-weight:600;">En revisión</span>' : 'Normal')}</td>
+            <td>${ip.is_allowed_by_admin ? '✅ Permitida por admin' : 'No'}</td>
             <td>${getRelativeTime(ip.last_used)}</td>
             <td>
-              ${!ip.is_allowed_by_admin ? `<button class="btn btn-primary btn-sm" onclick="adminPermitirIP('${ip.ip}')">Permitir</button>` : ''}
+              ${!ip.is_allowed_by_admin ? `<button class="btn btn-primary btn-sm" onclick="adminPermitirIP('${ip.ip}')">Permitir publicar</button>` : ''}
               ${!ip.is_blocked ? `<button class="btn btn-danger btn-sm" onclick="adminBloquearIP('${ip.ip}')">Bloquear</button>` : ''}
             </td>
           </tr>

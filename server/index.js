@@ -83,7 +83,7 @@ app.use('/api/', generalLimiter);
 
 // Detección de anomalías y límites absolutos por IP
 async function checkAndRegisterIP(ip, isAdmin) {
-  if (isAdmin) return false; // Admin infinito
+  if (isAdmin) return false; // Admin infinito: sin límite de publicaciones
 
   const rows = await query(`SELECT * FROM ip_registry WHERE ip = $1`, [ip]);
   
@@ -98,13 +98,20 @@ async function checkAndRegisterIP(ip, isAdmin) {
     }
     
     if (record.post_count >= 10 && !record.is_allowed_by_admin) {
-      throw new Error('Has alcanzado el límite máximo de 10 publicaciones. Tu IP está en revisión.');
+      throw new Error('Has alcanzado el límite máximo de 10 publicaciones. Tu IP está en revisión por el administrador.');
     }
 
-    await query(`UPDATE ip_registry SET post_count = post_count + 1, last_used = CURRENT_TIMESTAMP WHERE ip = $1`, [ip]);
+    const nuevoConteo = record.post_count + 1;
+    const llego_al_limite = nuevoConteo >= 10;
+
+    // Marcar limite_alcanzado cuando llega exactamente a 10 para que el admin sea notificado
+    await query(
+      `UPDATE ip_registry SET post_count = $1, last_used = CURRENT_TIMESTAMP, limite_alcanzado = $2 WHERE ip = $3`,
+      [nuevoConteo, llego_al_limite, ip]
+    );
     
     // Marcar como sospechoso si supera los 3 registros (manteniendo la heurística anterior)
-    return record.post_count + 1 > 3;
+    return nuevoConteo > 3;
   }
 }
 

@@ -16,6 +16,10 @@
 ### Añadido
 - **Panel de Administración**: Se incorporaron las tablas de Centros de Acopio, Refugios de Mascotas y Necesidades de Mascotas al panel de moderación, ya que anteriormente sólo se visualizaban Viviendas y Necesidades de Vivienda.
 - **Panel de Administración**: Nueva sección de **Control de IPs**, donde el administrador puede visualizar las IPs que han interactuado con la plataforma, desbloquearlas manualmente ("Permitir publicar") o bloquearlas definitivamente.
+- **Notificación de límite de publicaciones**: El panel admin ahora muestra un banner de alerta naranja cuando una IP alcanza exactamente 10 publicaciones, indicando al administrador que debe revisar y decidir si permitir o bloquear esa IP.
+
+### Corregido
+- **BUG-008**: `getPlaceholderImg()` estaba declarada dentro del bloque `try/catch` de centros-acopio en `renderAlojamientos()`, desbalanceando las llaves de la función y provocando que el segundo `try` de viviendas quedara sin `catch`. Función movida a scope global; los dos bloques `try/catch` son ahora independientes y correctamente balanceados.
 
 ### Seguridad
 - **Rate Limiting Persistente por IP**: Se modificó el sistema de detección de anomalías para que use la base de datos (`ip_registry`) en lugar de memoria volatil. Ahora, se permite un máximo de 10 publicaciones por IP antes de bloquear temporalmente a la IP y ponerla bajo revisión. Un administrador autenticado no tiene límite de publicaciones.

@@ -127,8 +127,12 @@ async function createTables() {
       post_count INT DEFAULT 0,
       is_blocked BOOLEAN DEFAULT FALSE,
       is_allowed_by_admin BOOLEAN DEFAULT FALSE,
+      limite_alcanzado BOOLEAN DEFAULT FALSE,
       last_used TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );`,
+    // Migración segura para bases de datos existentes que ya tienen la tabla sin la columna.
+    // ALTER TABLE ... IF NOT EXISTS solo está disponible en PostgreSQL 9.6+.
+    `ALTER TABLE ip_registry ADD COLUMN IF NOT EXISTS limite_alcanzado BOOLEAN DEFAULT FALSE;`,
 
     `CREATE INDEX IF NOT EXISTS idx_vivienda_ciudad ON vivienda(ciudad);`,
     `CREATE INDEX IF NOT EXISTS idx_vivienda_estado ON vivienda(estado);`,
