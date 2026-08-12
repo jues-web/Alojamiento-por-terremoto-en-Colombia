@@ -14,6 +14,13 @@
 ## [Unreleased]
 
 ### Añadido
+- **Panel de Administración**: Se incorporaron las tablas de Centros de Acopio, Refugios de Mascotas y Necesidades de Mascotas al panel de moderación, ya que anteriormente sólo se visualizaban Viviendas y Necesidades de Vivienda.
+- **Panel de Administración**: Nueva sección de **Control de IPs**, donde el administrador puede visualizar las IPs que han interactuado con la plataforma, desbloquearlas manualmente ("Permitir publicar") o bloquearlas definitivamente.
+
+### Seguridad
+- **Rate Limiting Persistente por IP**: Se modificó el sistema de detección de anomalías para que use la base de datos (`ip_registry`) en lugar de memoria volatil. Ahora, se permite un máximo de 10 publicaciones por IP antes de bloquear temporalmente a la IP y ponerla bajo revisión. Un administrador autenticado no tiene límite de publicaciones.
+
+### Cambiado
 - `CLAUDE.md` en la raíz: guía de arquitectura, comandos y protocolo de documentación
   para agentes Claude Code.
 - Helper `enviarFormulario()` en `public/app.js`, compartido por los cinco formularios de
