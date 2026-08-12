@@ -81,17 +81,31 @@ const generalLimiter = rateLimit({
 app.use('/api/admin/login', authLimiter);
 app.use('/api/', generalLimiter);
 
-// Detección de anomalías en ráfagas (Subidas masivas)
-const submissionTracker = new Map();
+// Detección de anomalías y límites absolutos por IP
+async function checkAndRegisterIP(ip, isAdmin) {
+  if (isAdmin) return false; // Admin infinito
 
-function detectAnomaly(ip) {
-  const now = Date.now();
-  const history = submissionTracker.get(ip) || [];
-  const recentHistory = history.filter(time => now - time < 5 * 60 * 1000); // 5 min
-  recentHistory.push(now);
-  submissionTracker.set(ip, recentHistory);
-  // Si envía más de 3 registros en 5 minutos, se marca como sospechoso
-  return recentHistory.length > 3;
+  const rows = await query(`SELECT * FROM ip_registry WHERE ip = $1`, [ip]);
+  
+  if (rows.length === 0) {
+    await query(`INSERT INTO ip_registry (ip, post_count, last_used) VALUES ($1, 1, CURRENT_TIMESTAMP)`, [ip]);
+    return false; // no es anomalía
+  } else {
+    const record = rows[0];
+    
+    if (record.is_blocked) {
+      throw new Error('Tu IP ha sido bloqueada. No puedes publicar más registros.');
+    }
+    
+    if (record.post_count >= 10 && !record.is_allowed_by_admin) {
+      throw new Error('Has alcanzado el límite máximo de 10 publicaciones. Tu IP está en revisión.');
+    }
+
+    await query(`UPDATE ip_registry SET post_count = post_count + 1, last_used = CURRENT_TIMESTAMP WHERE ip = $1`, [ip]);
+    
+    // Marcar como sospechoso si supera los 3 registros (manteniendo la heurística anterior)
+    return record.post_count + 1 > 3;
+  }
 }
 
 // Validación de Número Telefónico Colombiano
@@ -240,7 +254,8 @@ app.post('/api/viviendas', upload.single('foto'), async (req, res) => {
     }
 
     const clientIp = req.ip || req.connection.remoteAddress;
-    const isAnomaly = detectAnomaly(clientIp);
+    const isAdminUser = req.headers['x-admin-key'] === ADMIN_PASSWORD;
+    const isAnomaly = await checkAndRegisterIP(clientIp, isAdminUser);
 
     const viviendaId = uuidv4();
     let fotoId = null;
@@ -328,7 +343,8 @@ app.post('/api/necesidades-vivienda', async (req, res) => {
     }
 
     const clientIp = req.ip || req.connection.remoteAddress;
-    const isAnomaly = detectAnomaly(clientIp);
+    const isAdminUser = req.headers['x-admin-key'] === ADMIN_PASSWORD;
+    const isAnomaly = await checkAndRegisterIP(clientIp, isAdminUser);
 
     const id = uuidv4();
     const condEspecialBool = condicion_especial === true || condicion_especial === 'true';
@@ -395,7 +411,9 @@ app.post('/api/centros-acopio', async (req, res) => {
       return res.status(400).json({ error: 'Número de contacto inválido.' });
     }
 
-    const isAnomaly = detectAnomaly(req.ip);
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const isAdminUser = req.headers['x-admin-key'] === ADMIN_PASSWORD;
+    const isAnomaly = await checkAndRegisterIP(clientIp, isAdminUser);
     const id = uuidv4();
     await query(
       `INSERT INTO centro_acopio (id, ciudad, sector, direccion, contacto, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -429,7 +447,9 @@ app.post('/api/refugios-mascota', async (req, res) => {
       return res.status(400).json({ error: 'Número de contacto inválido.' });
     }
 
-    const isAnomaly = detectAnomaly(req.ip);
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const isAdminUser = req.headers['x-admin-key'] === ADMIN_PASSWORD;
+    const isAnomaly = await checkAndRegisterIP(clientIp, isAdminUser);
     const id = uuidv4();
     await query(
       `INSERT INTO refugio_mascota (id, tipo_mascota, ciudad, sector, direccion, contacto, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
@@ -463,7 +483,9 @@ app.post('/api/necesidades-mascota', async (req, res) => {
       return res.status(400).json({ error: 'Número de contacto inválido.' });
     }
 
-    const isAnomaly = detectAnomaly(req.ip);
+    const clientIp = req.ip || req.connection.remoteAddress;
+    const isAdminUser = req.headers['x-admin-key'] === ADMIN_PASSWORD;
+    const isAnomaly = await checkAndRegisterIP(clientIp, isAdminUser);
     const id = uuidv4();
     await query(
       `INSERT INTO necesidad_mascota (id, nombre_encargado, contacto, tipo_mascota, cantidad_mascotas, owner_token, sospechoso) VALUES ($1, $2, $3, $4, $5, $6, $7)`,
@@ -519,13 +541,15 @@ app.get('/api/admin/registros', requireAdmin, async (req, res) => {
     const centros = await query(`SELECT 'centro_acopio' as entidad_tipo, * FROM centro_acopio ORDER BY fecha_registro DESC`);
     const refugios = await query(`SELECT 'refugio_mascota' as entidad_tipo, * FROM refugio_mascota ORDER BY fecha_registro DESC`);
     const necMascotas = await query(`SELECT 'necesidad_mascota' as entidad_tipo, * FROM necesidad_mascota ORDER BY fecha_registro DESC`);
+    const ips = await query(`SELECT * FROM ip_registry ORDER BY last_used DESC`);
 
     res.json({
       viviendas,
       necesidades,
       centros,
       refugios,
-      necMascotas
+      necMascotas,
+      ips
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -567,6 +591,26 @@ app.patch('/api/admin/aprobar/:tipo/:id', requireAdmin, async (req, res) => {
 
     await query(`UPDATE ${tableName} SET sospechoso = false, reportes_count = 0 WHERE id = $1`, [id]);
     res.json({ success: true, message: 'Registro aprobado y verificado.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/admin/ips/:ip/permitir', requireAdmin, async (req, res) => {
+  try {
+    const { ip } = req.params;
+    await query(`UPDATE ip_registry SET is_allowed_by_admin = true, is_blocked = false WHERE ip = $1`, [ip]);
+    res.json({ success: true, message: 'IP permitida para seguir publicando.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.patch('/api/admin/ips/:ip/bloquear', requireAdmin, async (req, res) => {
+  try {
+    const { ip } = req.params;
+    await query(`UPDATE ip_registry SET is_blocked = true, is_allowed_by_admin = false WHERE ip = $1`, [ip]);
+    res.json({ success: true, message: 'IP bloqueada exitosamente.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

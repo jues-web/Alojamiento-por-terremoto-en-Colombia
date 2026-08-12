@@ -122,6 +122,14 @@ async function createTables() {
       fecha_carga TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
     );`,
 
+    `CREATE TABLE IF NOT EXISTS ip_registry (
+      ip VARCHAR(45) PRIMARY KEY,
+      post_count INT DEFAULT 0,
+      is_blocked BOOLEAN DEFAULT FALSE,
+      is_allowed_by_admin BOOLEAN DEFAULT FALSE,
+      last_used TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );`,
+
     `CREATE INDEX IF NOT EXISTS idx_vivienda_ciudad ON vivienda(ciudad);`,
     `CREATE INDEX IF NOT EXISTS idx_vivienda_estado ON vivienda(estado);`,
     `CREATE INDEX IF NOT EXISTS idx_necesidad_ciudad ON necesidad_vivienda(ciudad);`

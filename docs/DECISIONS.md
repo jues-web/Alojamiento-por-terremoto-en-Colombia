@@ -373,3 +373,29 @@ reescritura del SQL.
   EXISTS` al arrancar, así que **añadir una columna no la agrega a una base de datos que ya
   existe**; requiere un `ALTER TABLE` manual. Esta deuda es ahora más visible al haber un
   solo motor, y merecerá su propio ADR cuando el esquema empiece a evolucionar.
+
+---
+
+## ADR-010 — Límite de publicaciones por IP persistente en BD
+
+- **Fecha**: 2026-08-12
+- **Estado**: ✅ Aceptado
+- **Autor(es)**: Agente IA
+- **Rama**: `juan`
+- **Reemplaza a**: ADR-005 (parcialmente, en lo respectivo a la detección en memoria)
+
+### Contexto
+El ADR-005 estableció una detección de ráfagas en memoria para marcar registros como sospechosos si una IP superaba 3 publicaciones en 5 minutos. Sin embargo, no existía un límite absoluto y la información se perdía al reiniciar el servidor. Además, un usuario normal podía abusar enviando decenas de peticiones con tiempos más espaciados.
+
+### Opciones consideradas
+1. **Mantenerlo en memoria** — falla si el servidor se reinicia, lo cual pierde el historial de IPs.
+2. **Tabla persistente de IPs (`ip_registry`)** — permite contar las peticiones históricas de forma segura y proveer al panel admin herramientas para bloquear temporal o permanentemente, así como sobreescribir el bloqueo para casos verificados.
+
+### Decisión
+Se implementa una nueva tabla `ip_registry` en PostgreSQL que lleva el recuento de peticiones (`post_count`) para cada IP, la fecha de la última petición (`last_used`), y booleanos para control manual por administradores (`is_blocked` y `is_allowed_by_admin`).
+Cualquier IP (no admin) que supere 10 publicaciones recibirá error y entrará en revisión. El panel de administración tiene una nueva sección para poder marcar IPs como permitidas y saltar esta restricción.
+
+### Consecuencias
+- Al ser persistente, no se pierden registros de IPs.
+- Mayor control sobre el flujo, los admins tienen una herramienta contra el SPAM y actores maliciosos (y a favor de actores legítimos con alta necesidad).
+- Los administradores autenticados que envíen `x-admin-key` no son registrados en la tabla y no están sujetos a límites de publicación.

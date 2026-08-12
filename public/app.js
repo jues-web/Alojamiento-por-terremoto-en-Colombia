@@ -202,6 +202,10 @@ async function enviarFormulario(form, url, body, opciones = {}) {
     }
   };
 
+  if (adminKey) {
+    opciones.headers = { ...opciones.headers, 'x-admin-key': adminKey };
+  }
+
   let res;
   try {
     res = await fetch(url, { method: 'POST', ...opciones, body });
@@ -853,6 +857,77 @@ async function fetchAdminData() {
           </tr>
         `).join('')}
       </table>
+
+      <h3>📦 Centros de Acopio</h3>
+      <table class="admin-table">
+        <tr><th>Ciudad</th><th>Sector</th><th>Contacto</th><th>Sospechoso</th><th>Acción</th></tr>
+        ${(data.centros || []).map(c => `
+          <tr>
+            <td>${c.ciudad}</td>
+            <td>${c.sector}</td>
+            <td>${c.contacto}</td>
+            <td>${c.sospechoso ? '🚨 Sí' : 'No'}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="adminEliminar('centro_acopio','${c.id}')">Eliminar</button>
+              ${c.sospechoso ? `<button class="btn btn-primary btn-sm" onclick="adminAprobar('centro_acopio','${c.id}')">Aprobar</button>` : ''}
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+
+      <h3>🐶 Refugios de Mascotas</h3>
+      <table class="admin-table">
+        <tr><th>Tipo</th><th>Ciudad</th><th>Sector</th><th>Contacto</th><th>Sospechoso</th><th>Acción</th></tr>
+        ${(data.refugios || []).map(r => `
+          <tr>
+            <td>${r.tipo_mascota}</td>
+            <td>${r.ciudad}</td>
+            <td>${r.sector}</td>
+            <td>${r.contacto}</td>
+            <td>${r.sospechoso ? '🚨 Sí' : 'No'}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="adminEliminar('refugio_mascota','${r.id}')">Eliminar</button>
+              ${r.sospechoso ? `<button class="btn btn-primary btn-sm" onclick="adminAprobar('refugio_mascota','${r.id}')">Aprobar</button>` : ''}
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+
+      <h3>🐱 Necesidades Mascotas</h3>
+      <table class="admin-table">
+        <tr><th>Encargado</th><th>Tipo</th><th>Cantidad</th><th>Contacto</th><th>Sospechoso</th><th>Acción</th></tr>
+        ${(data.necMascotas || []).map(m => `
+          <tr>
+            <td>${m.nombre_encargado}</td>
+            <td>${m.tipo_mascota}</td>
+            <td>${m.cantidad_mascotas}</td>
+            <td>${m.contacto}</td>
+            <td>${m.sospechoso ? '🚨 Sí' : 'No'}</td>
+            <td>
+              <button class="btn btn-danger btn-sm" onclick="adminEliminar('necesidad_mascota','${m.id}')">Eliminar</button>
+              ${m.sospechoso ? `<button class="btn btn-primary btn-sm" onclick="adminAprobar('necesidad_mascota','${m.id}')">Aprobar</button>` : ''}
+            </td>
+          </tr>
+        `).join('')}
+      </table>
+
+      <h3>🛡️ Control de IPs</h3>
+      <table class="admin-table">
+        <tr><th>IP</th><th>Publicaciones</th><th>Bloqueado</th><th>Admin Override</th><th>Último uso</th><th>Acciones</th></tr>
+        ${(data.ips || []).map(ip => `
+          <tr>
+            <td>${ip.ip}</td>
+            <td>${ip.post_count}</td>
+            <td>${ip.is_blocked ? '🚨 Sí' : 'No'}</td>
+            <td>${ip.is_allowed_by_admin ? '✅ Sí' : 'No'}</td>
+            <td>${getRelativeTime(ip.last_used)}</td>
+            <td>
+              ${!ip.is_allowed_by_admin ? `<button class="btn btn-primary btn-sm" onclick="adminPermitirIP('${ip.ip}')">Permitir</button>` : ''}
+              ${!ip.is_blocked ? `<button class="btn btn-danger btn-sm" onclick="adminBloquearIP('${ip.ip}')">Bloquear</button>` : ''}
+            </td>
+          </tr>
+        `).join('')}
+      </table>
     `;
 
     contentEl.innerHTML = html;
@@ -894,5 +969,40 @@ async function adminAprobar(tipo, id) {
     }
   } catch (e) {
     showToast('Error de red al intentar aprobar.', 'error');
+  }
+}
+
+async function adminPermitirIP(ip) {
+  try {
+    const res = await fetch(`/api/admin/ips/${ip}/permitir`, {
+      method: 'PATCH',
+      headers: { 'x-admin-key': adminKey }
+    });
+    if (res.ok) {
+      showToast('IP permitida');
+      fetchAdminData();
+    } else {
+      showToast('Error al permitir IP.', 'error');
+    }
+  } catch (e) {
+    showToast('Error de red.', 'error');
+  }
+}
+
+async function adminBloquearIP(ip) {
+  if (!confirm('¿Seguro que deseas bloquear permanentemente esta IP?')) return;
+  try {
+    const res = await fetch(`/api/admin/ips/${ip}/bloquear`, {
+      method: 'PATCH',
+      headers: { 'x-admin-key': adminKey }
+    });
+    if (res.ok) {
+      showToast('IP bloqueada');
+      fetchAdminData();
+    } else {
+      showToast('Error al bloquear IP.', 'error');
+    }
+  } catch (e) {
+    showToast('Error de red.', 'error');
   }
 }
