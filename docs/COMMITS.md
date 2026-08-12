@@ -21,6 +21,7 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| *(merge)* | 2026-08-12 | Agente IA | `release(main): fix critico seguridad — credenciales docker-compose via variables de entorno` | ✅ ok |
 | `73e0a92` | 2026-08-12 | Juan Esteban B. | `release(main): MVP v1.0.0 — Plataforma Alojamiento por Terremoto Colombia lista para produccion` | ✅ ok |
 
 ---
@@ -29,6 +30,7 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| *(merge)* | 2026-08-12 | Agente IA | `merge(dev): fix seguridad — credenciales docker-compose via variables de entorno` | ✅ ok |
 | `21078ed` | 2026-08-12 | Juan Esteban B. | `merge(dev): integrar MVP completo desde rama juan — Docker, PostgreSQL, Admin Panel, docs/origen` | ✅ ok |
 | `db2c582` | 2026-08-11 | Juan Esteban B. | `docs: add user stories and architecture requirements for the emergency housing platform` | ✅ ok |
 
@@ -38,6 +40,7 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| `78438f5` | 2026-08-12 | Agente IA | `fix(docker): eliminar credenciales hardcodeadas — variables de entorno para produccion segura` | ✅ ok |
 | `0ffcc07` | 2026-08-12 | Juan Esteban B. | `refactor: mover Arquitectura a docs/origen como documentacion historica de inicio del proyecto` | ✅ ok |
 | *(pendiente)* | 2026-08-12 | Agente IA | `docs: crear sistema de control de cambios — AGENTS.md, COMMITS.md, BUGS.md, DECISIONS.md, CHANGELOG.md` | ✅ ok |
 | `0fc18ab` | 2026-08-11 | Juan Esteban B. | `chore: agregar entrypoint.sh seeder, fix docker-compose version obsoleto y restart=always garantizado` | ✅ ok |
@@ -74,9 +77,9 @@
 
 | Rama | Total Commits | Último Commit | Autor Principal |
 |------|--------------|---------------|-----------------|
-| `main` | 1 | 2026-08-12 | Juan Esteban B. |
-| `dev` | 2 | 2026-08-12 | Juan Esteban B. |
-| `juan` | 4 | 2026-08-12 | Juan Esteban B. |
+| `main` | 2 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `dev` | 3 | 2026-08-12 | Juan Esteban B. / Agente IA |
+| `juan` | 5 | 2026-08-12 | Juan Esteban B. / Agente IA |
 | `emmanuel` | 1 | 2026-08-11 | Juan Esteban B. |
 
 > Actualizar esta tabla cada vez que se agreguen commits.
