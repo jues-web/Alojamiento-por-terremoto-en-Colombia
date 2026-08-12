@@ -38,8 +38,14 @@
 
 ## 🟡 BUGS EN PROGRESO (Alguien está trabajando en ellos)
 
+> *No hay bugs en progreso.*
+
+---
+
+## ✅ BUGS RESUELTOS
+
 ### BUG-007 — Validación de teléfono acepta más de 10 dígitos (11 dígitos permitidos)
-- **Estado**: 🟡 EN PROGRESO
+- **Estado**: ✅ RESUELTO
 - **Severidad**: 🟡 Media
 - **Rama afectada**: `juan`
 - **Reportado por**: Juan Esteban B. — 2026-08-12
@@ -51,12 +57,8 @@
   3. Enviar el formulario.
 - **Resultado esperado**: El formulario exige máximo 10 dígitos y rechaza 11 o más dígitos.
 - **Resultado actual (antes del fix)**: Se aceptaba y guardaba el registro con 11 dígitos.
-- **Commit de fix**: *(pendiente)*
+- **Commit de fix**: `264ed79`
 - **Notas**: Se restringe `isValidPhone` a `7 <= length <= 10`, se corrige la respuesta de validación y se añade `maxlength="10"` a los inputs de tipo tel en `public/app.js`.
-
----
-
-## ✅ BUGS RESUELTOS
 
 ### BUG-006 — HTTP 429 en peticiones API y panel de admin en blanco por rate limiting restrictivo y manejo silencioso de errores
 - **Estado**: ✅ RESUELTO
@@ -247,8 +249,8 @@
 | Categoría | Cantidad |
 |-----------|----------|
 | 🔴 Activos | 0 |
-| 🟡 En Progreso | 1 |
-| ✅ Resueltos | 7 |
+| 🟡 En Progreso | 0 |
+| ✅ Resueltos | 8 |
 | 📌 Conocidos | 1 |
 | **Total** | **9** |
 

@@ -53,6 +53,10 @@
 - **BUG-006**: Corrección en la entrega y visualización de imágenes de viviendas y habitaciones. Se actualizó la consulta SQL en `GET /api/viviendas` con `COALESCE(v.foto_id, f.id) AS foto_id` y `LEFT JOIN foto f ON (v.foto_id = f.id OR f.vivienda_id = v.id)` para vincular correctamente fotos existentes. Además en `public/app.js` se implementó `getPlaceholderImg(tipo)` para renderizar ilustraciones SVG vectoriales cuando la vivienda no posea foto personalizada o falle la carga en red.
 
 ### Corregido
+- **BUG-007**: Validación de teléfono defectuosa que aceptaba 11 o 12 dígitos en todos los
+  formularios de registro. Se corrigió `isValidPhone()` en `server/index.js` para exigir
+  entre 7 y 10 dígitos (celulares y fijos en Colombia). Se agregó `maxlength="10"` a los inputs
+  del frontend en `public/app.js` como protección UI inmediata.
 - **BUG-006**: HTTP 429 en todas las rutas `/api/` bloqueaba la navegación normal. Dos causas
   raíz corregidas en `5e7e6da`: (1) `generalLimiter` subió de 300 a 1000 req/15min y se
   excluyeron las rutas de foto con `skip`; se añadió `app.set('trust proxy', 1)` para que

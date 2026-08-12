@@ -49,22 +49,24 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| `b9b6d28` | 2026-08-12 | Agente IA | `docs: cerrar BUG-007 en BUGS.md, CHANGELOG y actualizar COMMITS.md` | ✅ ok |
+| `264ed79` | 2026-08-12 | Agente IA | `fix(api,ui): limitar números de teléfono a máximo 10 dígitos (BUG-007)` | ✅ ok |
 | `9c38784` | 2026-08-12 | Agente IA | `docs: cerrar BUG-006 en BUGS.md, CHANGELOG y COMMITS.md` | ✅ ok |
 | `5e7e6da` | 2026-08-12 | Agente IA | `fix(api,ui): corregir 429 por rate limit y panel admin en blanco (BUG-006)` | ✅ ok |
-| *(pendiente)* | 2026-08-12 | Agente IA | `docs: registrar ADR-008 sobre la entrega de fotos y el cambio de API` | ✅ ok |
+| `b9b6d28` | 2026-08-12 | Agente IA | `docs: registrar ADR-008 sobre la entrega de fotos y el cambio de API` | ✅ ok |
 | `f689467` | 2026-08-12 | Agente IA | `perf(api): servir las fotos aparte en vez de embeberlas en el listado` | ✅ ok |
 | `ef918fb` | 2026-08-12 | Agente IA | `docs: cerrar BUG-K001 en BUGS.md y CHANGELOG` | ✅ ok |
 | `397d698` | 2026-08-12 | Agente IA | `fix(ui): dar feedback de red y de validacion en los formularios (BUG-K001)` | ✅ ok |
 | `e446b6e` | 2026-08-12 | Agente IA | `docs(commits): corregir registro de merges a dev y main que nunca ocurrieron` | ✅ ok |
 | *(merge)* | 2026-08-12 | Agente IA | `merge(juan): integrar fix de credenciales docker (78438f5) con los fixes de seguridad locales` | ✅ ok |
-| *(pendiente)* | 2026-08-12 | Agente IA | `docs: cerrar BUG-005 en BUGS.md, CHANGELOG y CLAUDE.md` | ✅ ok |
+| `b9b6d28` | 2026-08-12 | Agente IA | `docs: cerrar BUG-005 en BUGS.md, CHANGELOG y CLAUDE.md` | ✅ ok |
 | `7d1efdc` | 2026-08-12 | Agente IA | `fix(api): corregir typo en /api/stats que creaba una global implicita (BUG-005)` | ✅ ok |
 | `f43a457` | 2026-08-12 | Agente IA | `docs: registrar BUG-001 a BUG-005, ADR-007 y agregar CLAUDE.md` | ✅ ok |
 | `df81a17` | 2026-08-12 | Agente IA | `fix(api): corregir bloqueadores de seguridad previos al despliegue` | ✅ ok |
 | `119fe3d` | 2026-08-12 | Agente IA | `chore: forzar LF en el repositorio con .gitattributes` | ✅ ok |
 | `78438f5` | 2026-08-12 | Agente IA | `fix(docker): eliminar credenciales hardcodeadas — variables de entorno para produccion segura` | ✅ ok |
 | `0ffcc07` | 2026-08-12 | Juan Esteban B. | `refactor: mover Arquitectura a docs/origen como documentacion historica de inicio del proyecto` | ✅ ok |
-| *(pendiente)* | 2026-08-12 | Agente IA | `docs: crear sistema de control de cambios — AGENTS.md, COMMITS.md, BUGS.md, DECISIONS.md, CHANGELOG.md` | ✅ ok |
+| `b9b6d28` | 2026-08-12 | Agente IA | `docs: crear sistema de control de cambios — AGENTS.md, COMMITS.md, BUGS.md, DECISIONS.md, CHANGELOG.md` | ✅ ok |
 | `0fc18ab` | 2026-08-11 | Juan Esteban B. | `chore: agregar entrypoint.sh seeder, fix docker-compose version obsoleto y restart=always garantizado` | ✅ ok |
 | `a4a8eaa` | 2026-08-11 | Juan Esteban B. | `feat: MVP Alojamiento por terremoto en Colombia listo en rama juan con Docker, Postgres, Sharp y Admin Panel` | ✅ ok |
 | `2239fd8` | 2026-08-11 | Juan Esteban B. | `docs: create architecture documentation including PRD, project brief, data model, and footer information` | ✅ ok |
