@@ -205,6 +205,12 @@ body {
   text-decoration: none;
   min-height: 48px; /* Touch target min 48px */
 }
+/* BUG-K001: estado visible mientras se envía un formulario, para que se note que la
+   petición está en curso y no invite a pulsar de nuevo con conexión lenta. */
+.btn:disabled {
+  opacity: .6;
+  cursor: progress;
+}
 .btn-primary { background: var(--teal); color: #fff; }
 .btn-primary:hover { background: #0c5753; }
 .btn-secondary { background: var(--navy); color: #fff; }
