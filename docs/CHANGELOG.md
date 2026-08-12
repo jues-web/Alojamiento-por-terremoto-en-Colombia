@@ -14,15 +14,38 @@
 ## [Unreleased]
 
 ### Añadido
-*(Aquí van los próximos cambios que aún no tienen versión)*
+- `CLAUDE.md` en la raíz: guía de arquitectura, comandos y protocolo de documentación
+  para agentes Claude Code.
+- Validación de estados permitidos por entidad en los endpoints `PATCH .../estado`
+  (`Busca ocupante` / `Ya fue ocupada` y `Buscando alojamiento` / `Ya encontró alojamiento`).
 
 ### Cambiado
+- **PostgreSQL es obligatorio en producción** (ADR-007). Con `NODE_ENV=production`, la app
+  ya no cae a SQLite: falla al arrancar con un mensaje explícito y `exit(1)`. En desarrollo
+  el fallback sigue igual.
+- `docker-compose.yml` toma `ADMIN_PASSWORD` desde `.env` en vez de tenerla escrita.
+- `.env.example` documenta cómo generar una clave admin fuerte y el uso de `?sslmode=require`.
+- `toggleEstadoVivienda()` y `toggleEstadoNecesidad()` muestran el error del servidor y los
+  fallos de red mediante `showToast`, en vez de fallar en silencio.
 
 ### Corregido
+- **BUG-001**: el fallback silencioso a SQLite hacía que la plataforma perdiera todos los
+  registros en cada reinicio del contenedor, sin ningún error visible.
+- **BUG-004**: el botón "Cambiar Estado" no daba ninguna señal cuando la operación fallaba.
 
 ### Eliminado
+- Valor por defecto `admin123` de `ADMIN_PASSWORD` en `entrypoint.sh` y `docker-compose.yml`.
 
 ### Seguridad
+- **BUG-002**: en producción se rechaza el arranque si `ADMIN_PASSWORD` falta, mide menos de
+  12 caracteres o es una clave débil conocida. Evita desplegar con el panel de eliminación
+  de registros abierto al público.
+- **BUG-003**: `PATCH /api/viviendas/:id/estado` y `PATCH /api/necesidades-vivienda/:id/estado`
+  exigen ahora el `owner_token` del autor (o la clave admin vía `x-admin-key`). Antes cualquiera
+  podía cambiar el estado de cualquier registro y vaciar los listados.
+- **BUG-003**: los cinco listados públicos dejan de exponer el `owner_token` de los registros
+  (nuevo helper `sinDatosPrivados()`). Antes viajaba al cliente en cada `GET`, permitiendo
+  suplantar al autor de cualquier publicación.
 
 ---
 

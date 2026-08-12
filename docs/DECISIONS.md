@@ -200,3 +200,50 @@ Flujo `[rama-persona]` → `dev` → `main`:
 - Producción siempre está estable.
 - Dev actúa como staging de integración.
 - Cada persona tiene autonomía total en su rama.
+
+---
+
+## ADR-007 — El fallback a SQLite queda restringido a desarrollo
+
+- **Fecha**: 2026-08-12
+- **Estado**: ✅ Aceptado
+- **Autor(es)**: Agente IA
+- **Rama**: `juan`
+- **Refina**: ADR-001 (que sigue vigente para el entorno de desarrollo)
+
+### Contexto
+El ADR-001 estableció un fallback automático de PostgreSQL a SQLite para que el desarrollo
+local no exigiera Docker. Al preparar el despliegue en un host real (Render, Fly.io) se
+detectó que ese fallback es peligroso en producción: `data.db` vive en el disco efímero del
+contenedor. Si `DATABASE_URL` tiene un typo, credenciales caducadas o falla la negociación
+SSL —Neon y la mayoría de proveedores gestionados exigen `sslmode=require`—, la aplicación
+arranca sin errores, acepta registros y los pierde en cada reinicio o redespliegue.
+
+El propio ADR-001 anticipaba "bugs edge-case" por las diferencias entre motores, pero no
+contemplaba este modo de fallo, que es silencioso y destruye datos. Se registró como BUG-001.
+
+### Opciones consideradas
+1. **Dejar el fallback como está y documentarlo** — el riesgo depende de que nadie se
+   equivoque al configurar el host. Inaceptable para una herramienta de emergencia.
+2. **Eliminar SQLite del proyecto** — resolvería el problema pero rompería el desarrollo
+   local sin Docker, que es justamente lo que el ADR-001 quería proteger.
+3. **Condicionar el fallback al entorno** — SQLite sigue disponible en desarrollo; en
+   producción la ausencia de PostgreSQL es un error fatal de arranque.
+
+### Decisión
+Opción 3. `server/db.js` lee `NODE_ENV`: si vale `production` y no hay conexión a PostgreSQL
+(por `DATABASE_URL` ausente o por fallo de conexión), `initDB()` lanza un error con el
+diagnóstico concreto. `server/index.js` lo captura y termina con `process.exit(1)` para que
+Docker, Render o Fly marquen el despliegue como fallido en vez de dejar un contenedor vivo
+sin servidor escuchando.
+
+### Consecuencias
+- Un error de configuración de base de datos se manifiesta al desplegar, no días después
+  al descubrir que los registros desaparecieron.
+- Se protege el MUST-HAVE #2 del Project Brief: los listados deben ser públicos y compartidos.
+  Un despliegue sobre SQLite efímero degradaría la plataforma a una libreta local.
+- El desarrollo local mantiene exactamente la ergonomía del ADR-001: `npm start` sin Docker
+  sigue funcionando contra SQLite.
+- Contrapartida: `docker-compose.yml` define `NODE_ENV=production`, así que el stack local
+  también exige PostgreSQL. Es coherente —ese stack existe para replicar producción— pero
+  conviene saberlo antes de levantar el compose.
