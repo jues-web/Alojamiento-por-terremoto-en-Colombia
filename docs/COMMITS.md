@@ -50,6 +50,7 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
+| `6fcb2c7` | 2026-08-13 | Agente IA | `feat(ui): agregar aviso legal y tratamiento de datos personales en el footer` | ✅ ok |
 | `3a2f8d1` | 2026-08-12 | Agente IA | `feat(api,ui): control limite de IPs persistente y mejoras de UI de panel admin (ADR-010)` | ✅ ok |
 | `b9b6d28` | 2026-08-12 | Agente IA | `docs: cerrar BUG-007 en BUGS.md, CHANGELOG y actualizar COMMITS.md` | ✅ ok |
 | `264ed79` | 2026-08-12 | Agente IA | `fix(api,ui): limitar números de teléfono a máximo 10 dígitos (BUG-007)` | ✅ ok |
