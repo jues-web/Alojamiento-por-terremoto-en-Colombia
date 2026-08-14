@@ -21,8 +21,7 @@
 
 | Hash | Fecha | Autor | Mensaje | Estado |
 |------|-------|-------|---------|--------|
-| *(pendiente)* | 2026-08-12 | Emmanuel P. / Agente IA | `feat(mascota,admin): foto en refugios de mascotas y trazabilidad de IP por publicacion` | ⚠️ revisión |
-| *(pendiente)* | 2026-08-12 | Agente IA | `merge(main): integrar desde dev el fix BUG-007` | ✅ ok |
+| `1c23d61` | 2026-08-13 | Agente IA | `merge(main): integrar release 1.1.0 desde dev` | ✅ ok |
 | `48df43f` | 2026-08-12 | Agente IA | `merge(main): integrar desde dev el MVP v1.0.0 completo preparado para despliegue` | ✅ ok |
 | `2239fd8` | 2026-08-11 | Juan Esteban B. | `docs: create architecture documentation including PRD, project brief, data model, and footer information` | ✅ ok |
 
@@ -33,6 +32,7 @@
 
 | *(pendiente)* | 2026-08-12 | Agente IA | `merge(dev): integrar desde juan el fix BUG-007 y docs` | ✅ ok |
 | Hash | Fecha | Autor | Mensaje | Estado |
+| `4de8c99` | 2026-08-13 | Agente IA | `merge(dev): integrar release 1.1.0 desde juan` | ✅ ok |
 | `a9a60e6` | 2026-08-12 | Agente IA | `fix(ui,db): vincular e ilustrar correctamente imagenes de viviendas y habitaciones (BUG-006)` | ✅ ok |
 | `7cc4a16` | 2026-08-12 | Agente IA | `docs: registrar ADR-009 sobre PostgreSQL como unico motor` | ✅ ok |
 | `e9090bd` | 2026-08-12 | Emmanuel P. / Agente IA | `refactor(db): PostgreSQL como unico motor, se retira SQLite (ADR-009)` | ✅ ok |
