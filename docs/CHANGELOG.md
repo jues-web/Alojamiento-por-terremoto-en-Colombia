@@ -13,7 +13,12 @@
 
 ## [Unreleased]
 
+---
+
+## [1.1.0] — 2026-08-13
+
 ### Añadido
+- **Aviso Legal y Privacidad**: Se agregó un disclaimer en el footer de la plataforma (Aviso Legal y Tratamiento de Datos Personales) detallando la exoneración de responsabilidad y el manejo de datos (ley 1581 de 2013) como iniciativa ciudadana solidaria.
 - **Panel de Administración**: Se incorporaron las tablas de Centros de Acopio, Refugios de Mascotas y Necesidades de Mascotas al panel de moderación, ya que anteriormente sólo se visualizaban Viviendas y Necesidades de Vivienda.
 - **Panel de Administración**: Nueva sección de **Control de IPs**, donde el administrador puede visualizar las IPs que han interactuado con la plataforma, desbloquearlas manualmente ("Permitir publicar") o bloquearlas definitivamente.
 - **Notificación de límite de publicaciones**: El panel admin ahora muestra un banner de alerta naranja cuando una IP alcanza exactamente 10 publicaciones, indicando al administrador que debe revisar y decidir si permitir o bloquear esa IP.
